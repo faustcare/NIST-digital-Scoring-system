@@ -711,9 +711,11 @@ function vScore(id){
   gridAlign.innerHTML=ah;gridGap.innerHTML=gh;
   document.querySelectorAll('#g-align .cell').forEach(el=>{
     el.addEventListener("click",()=>{cycleCode(id,el.dataset.code,["pass","partial","miss"])});
+    bindCellUX(id,el);
   });
   document.querySelectorAll('#g-gap .cell').forEach(el=>{
     el.addEventListener("click",()=>{cycleCode(id,el.dataset.code,["ok","no"])});
+    bindCellUX(id,el);
   });
   $("#bb-save").onclick=()=>{s=getSession(id);s.savedAt=Date.now();saveSession(s);toast("已暫存 "+new Date().toLocaleTimeString("zh-TW",{hour12:false}))};
   $("#bb-done").onclick=()=>{finishSession(id)};
@@ -734,6 +736,8 @@ function cycleCode(id,code,states){
   s.savedAt=Date.now();saveSession(s);
   const el=document.querySelector(`#g-align [data-code="${code}"],#g-gap [data-code="${code}"]`);
   if(el)updateCell(id,el,code,states);
+  buzz(12);
+  if(states[0]==="pass"&&(next==="pass"||next==="partial"))linkGap(id,code);
   renderTotal(s);
 }
 function updateCell(id,el,code,handlers){
