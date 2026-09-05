@@ -322,6 +322,52 @@ function listSessions(){return lsGet(LS_SESS,[]).sort((a,b)=>(b.createdAt||0)-(a
 function getSession(id){return lsGet(LS_SESS,[]).find(s=>s.id===id)||null}
 function saveSession(s){const arr=lsGet(LS_SESS,[]);const i=arr.findIndex(x=>x.id===s.id);if(i>=0)arr[i]=s;else arr.unshift(s);lsSet(LS_SESS,arr)}
 function delSession(id){lsSet(LS_SESS,lsGet(LS_SESS,[]).filter(s=>s.id!==id))}
+/* ---------- supabase cloud sync (optional) ---------- */
+function supabaseCfg(){return lsGet("nist_supabase_cfg",null)}
+function saveSupabaseCfg(c){lsSet("nist_supabase_cfg",c)}
+function loadSupabaseLib(){
+  return new Promise((res,rej)=>{
+    if(window.__supabase){res(window.__supabase);return}
+    const el=document.createElement("script");
+    el.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    el.onload=()=>{window.__supabase=window.supabase;res(window.__supabase)};
+    el.onerror=()=>rej(new Error("載入 Supabase SDK 失敗（請檢查網路）"));
+    document.head.appendChild(el);
+  });
+}
+async function supabaseClient(){
+  const cfg=supabaseCfg();if(!cfg||!cfg.enabled)return null;
+  const sb=await loadSupabaseLib();
+  return sb.createClient(cfg.url,cfg.anonKey);
+}
+async function testSupabase(){
+  const cfg=supabaseCfg();if(!cfg)return {ok:false,msg:"尚未設定"};
+  try{const sb=await loadSupabaseLib();const c=sb.createClient(cfg.url,cfg.anonKey);
+    const {error}=await c.from("sessions").select("id").limit(1);
+    return error?{ok:false,msg:error.message}:{ok:true,msg:"連線成功"};
+  }catch(e){return {ok:false,msg:e.message}}
+}
+async function syncAll(){
+  const c=await supabaseClient();if(!c)return {ok:false,msg:"雲端同步未啟用"};
+  const sessions=listSessions();let up=0;
+  for(const s of sessions){
+    const row={local_id:s.id,form_id:s.formId,candidate:s.trial.candidate,aircraft_make:s.trial.aircraft_make,aircraft_model:s.trial.aircraft_model,payload:s.trial.payload,personnel:s.trial.personnel,facility:s.trial.facility,trial_date:s.trial.date,trial_time:s.trial.time,lane_no:s.trial.lane_no,lane_spacing:s.trial.lane_spacing,lighting:s.trial.lighting,wind_avg:s.trial.wind_avg,wind_gust:s.trial.wind_gust,pilot_view:s.trial.pilot_view,time_limit_min:s.trial.time_limit_min,time_elapsed_ms:elapsedMs(s),scoring_source:s.trial.scoring_source,status:s.status,fault_code:s.fault||"",notes:s.notes||"",scores:s.scores||{}};
+    const {error}=await c.from("sessions").upsert(row,{onConflict:"local_id"});
+    if(!error)up++;
+  }
+  const {data,error}=await c.from("sessions").select("*").order("created_at",{ascending:false});
+  if(error)return {ok:false,msg:error.message};
+  let down=0;
+  for(const r of data||[]){
+    if(!r.local_id||getSession(r.local_id))continue;
+    const f=getForm(r.form_id);
+    const s={id:r.local_id,formId:r.form_id,form:f?{id:f.id,lane:f.lane,level:f.level,name:f.name,title:f.title,time_limit_minutes:f.time_limit_minutes}:{id:r.form_id,title:r.form_id},_kind:"bucket",_items:[],
+      trial:{candidate:r.candidate||"",aircraft_make:r.aircraft_make||"",aircraft_model:r.aircraft_model||"",payload:r.payload||"",personnel:r.personnel||"",facility:r.facility||"",date:r.trial_date||"",time:r.trial_time||"",lane_no:r.lane_no||"",lane_spacing:r.lane_spacing||"10",wind_avg:r.wind_avg||"",wind_gust:r.wind_gust||"",lighting:r.lighting||"DAYLIGHT",pilot_view:r.pilot_view||"EYES ON",time_limit_min:r.time_limit_min||10,scoring_source:r.scoring_source||"Pilot"},
+      scores:r.scores||{},fault:r.fault_code||"",notes:r.notes||"",timer:{startedAt:null,accum:r.time_elapsed_ms||0,running:false},status:r.status||"draft",createdAt:Date.parse(r.created_at)||Date.now(),savedAt:Date.now()};
+    saveSession(s);down++;
+  }
+  return {ok:true,msg:"上傳 "+up+" 筆、下載 "+down+" 筆"};
+}
 function newSession(formId,trial,forceId){
   const f=getForm(formId);if(!f)return null;
   const t=trial||{};
@@ -803,6 +849,21 @@ function vForms(){
       <h3>載入既有 JSON 檔案</h3>
       <div class="meta">也可從檔案載入（如已下載的 forms JSON）。</div>
       <input type="file" id="filej" accept=".json,application/json" style="margin-top:10px;font-size:12px">
+    </div>
+    <div class="card" id="cloudcard">
+      <h3>雲端同步（Supabase）${supabaseCfg()&&supabaseCfg().enabled?'<span class="chip ok">已啟用</span>':'<span class="chip">未啟用</span>'}</h3>
+      <div class="meta">填入 Supabase 專案 URL 與 anon key 後啟用。啟用後「立即同步」會上傳本地場次並下載遠端場次（以 local_id 去重）。未啟用時完全離線、不影響使用。需先在 Supabase 執行 supabase/schema.sql。</div>
+      <div class="flabel">Project URL</div>
+      <input class="finput" id="sb-url" placeholder="https://xxxxxx.supabase.co" value="${esc((supabaseCfg()||{}).url||'')}">
+      <div class="flabel">anon public key</div>
+      <input class="finput" id="sb-key" placeholder="eyJhbGciOi…" value="${esc((supabaseCfg()||{}).anonKey||'')}">
+      <div class="btnrow">
+        <button class="btn primary" id="b-sb-enable">啟用／儲存</button>
+        <button class="btn ghost" id="b-sb-test">測試連線</button>
+        <button class="btn ghost" id="b-sb-sync">立即同步</button>
+        <button class="btn ghost" id="b-sb-disable">停用</button>
+      </div>
+      <div id="sb-status" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
     </div>`;
   $("#b-apply").onclick=()=>{
     try{const j=JSON.parse($("#jsonbox").value);
