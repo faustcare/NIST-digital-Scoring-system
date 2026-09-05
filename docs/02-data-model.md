@@ -58,6 +58,12 @@ id, name, email, role（admin/proctor/viewer）
 ### session_exports
 id, session_id, type（pdf/csv）, file_url, created_at
 
+## Supabase 遷移（已完成 v1）
+
+- `supabase/schema.sql`：forms / form_items / profiles / sessions / session_items / session_exports 全表 + RLS（本人讀寫＋admin 全看）+ updated_at 觸發器 + 索引
+- App「表單管理」內建雲端同步：填 Project URL + anon key → 啟用 → 上傳/下載場次（以 local_id 去重）
+- 未設定時完全離線、不影響既有使用
+
 ## API 草案（REST）
 
 ```

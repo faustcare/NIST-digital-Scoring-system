@@ -31,7 +31,7 @@ app/forms.open-lane.json        # 表單庫配置（20 張表單）
 | M1 MVP | 表單引擎＋評分閉環（選表單→計時→打點→計分→存檔→匯出） | ✅ 完成 |
 | M1.1 | Scenario 表單（Vehicle×2/WAS/Obstructed 1–10） | ✅ 完成 |
 | M1.2 | Sensor 表單（SENSING 1–5） | ✅ 完成 |
-| M2 | 通過門檻設定、歷史報表、Supabase 帳號/雲端同步 | ⬜ 待開發 |
+| M2 | 通過門檻設定 ✅、Supabase schema＋雲端同步 ✅、歷史報表 | 🔶 進行中 |
 | M3 | 多考官權限、API、照片/簽名數位化、跨版本表單管理 | ⬜ 待開發 |
 
 詳細規劃見 `docs/`。

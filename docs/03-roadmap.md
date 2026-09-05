@@ -21,7 +21,7 @@
 ## M2 ⬜ 待開發
 - [x] 通過門檻設定（可配置 min_score＋時限 → 自動 Pass/Fail，列入匯出） [2026-09-05 完成]
 - [ ] 歷史報表（考生/場道/Level/時間過濾）
-- [ ] Supabase 遷移：帳號、雲端同步、storage
+- [x] Supabase 遷移：schema.sql（含 RLS）+ App 雲端同步層（URL/key 可設定、local_id 去重） [2026-09-05 完成]
 - [ ] 條件可比性警告（不同間距/照明不應互比）
 
 ## M3 ⬜ 待開發
