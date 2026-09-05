@@ -921,6 +921,14 @@ function vResult(id){
       <div class="bigtot" style="margin-top:12px">
         <div><b class="mono" style="border:2px solid var(--paper-ink);border-radius:99px;padding:4px 16px">${verdictOf(s,sc).verdict}</b><span>${esc(verdictOf(s,sc).reason)}</span></div>
       </div>
+      <h4>現場照片</h4>
+      ${mediaList(s.id).filter(m=>m.type==="photo").length
+        ? '<div style="display:flex;flex-wrap:wrap;gap:8px">'+mediaList(s.id).filter(m=>m.type==="photo").map(m=>'<img src="'+esc(m.url)+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--paper-ink)" alt="現場照片">').join("")+'</div>'
+        : '<div class="notes">尚未上傳照片。</div>'}
+      <div class="no-print btnrow"><button class="btn small" id="b-addphoto">新增照片</button></div>
+      <h4>考官簽名</h4>
+      <canvas id="sig-canvas" width="320" height="100" style="border:1.5px solid var(--paper-ink);border-radius:8px;background:#fff;width:100%;height:110px;touch-action:none"></canvas>
+      <div class="no-print btnrow"><button class="btn small" id="b-sig-save">儲存簽名</button><button class="btn small ghost" id="b-sig-clear">清除</button></div>
       <div class="sigs"><div class="sg">考官簽名</div><div class="sg">考生簽名</div></div>
     </div>
     <div class="statline no-print">
