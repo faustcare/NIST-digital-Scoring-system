@@ -163,3 +163,13 @@ create policy "form_items readable" on public.form_items for select using (true)
 
 -- 提示：將 sessions 的 proctor_id 設為 auth.uid() 後，
 -- 既有「own sessions」RLS 即自動讓 proctor 只看自己的場次、admin 看全部。
+
+-- ---------- Storage（現場照片） ----------
+insert into storage.buckets (id, name, public)
+values ('media','media',true) on conflict (id) do nothing;
+drop policy if exists "media public read" on storage.objects;
+create policy "media public read" on storage.objects
+  for select using (bucket_id = 'media');
+drop policy if exists "media auth insert" on storage.objects;
+create policy "media auth insert" on storage.objects
+  for insert with check (bucket_id = 'media' and auth.role() = 'authenticated');
