@@ -865,6 +865,24 @@ function vForms(){
       </div>
       <div id="sb-status" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
     </div>`;
+    const sbStat=function(msg,ok){const el=$("#sb-status");if(!el)return;el.innerHTML=ok?'<span style="color:var(--green)">✓ '+esc(msg)+'</span>':'<span style="color:var(--red)">✕ '+esc(msg)+'</span>';};
+  $("#b-sb-enable").onclick=async()=>{
+    const url=$("#sb-url").value.trim(),key=$("#sb-key").value.trim();
+    if(!url||!key){sbStat("請填 URL 與 anon key",false);return}
+    saveSupabaseCfg({url,anonKey:key,enabled:true});sbStat("已儲存並啟用；建議先測試連線",true);vForms();
+  };
+  $("#b-sb-test").onclick=async()=>{
+    const url=$("#sb-url").value.trim(),key=$("#sb-key").value.trim();
+    if(!url||!key){sbStat("請先填 URL 與 anon key",false);return}
+    saveSupabaseCfg({url,anonKey:key,enabled:true});
+    sbStat("測試中…",true);
+    const r=await testSupabase();sbStat(r.msg,r.ok);
+  };
+  $("#b-sb-sync").onclick=async()=>{
+    sbStat("同步中…",true);
+    const r=await syncAll();sbStat(r.msg,r.ok);
+  };
+  $("#b-sb-disable").onclick=()=>{const c=supabaseCfg();if(c){c.enabled=false;saveSupabaseCfg(c)}sbStat("已停用雲端同步",true);vForms()};
   $("#b-apply").onclick=()=>{
     try{const j=JSON.parse($("#jsonbox").value);
       if(!j.forms||!Array.isArray(j.forms)||!j.forms.length)throw new Error("缺 forms 陣列");
