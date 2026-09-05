@@ -658,7 +658,7 @@ function vResult(id){
       ${s.fault?`<h4>結束原因</h4><div class="notes">${esc(s.fault)}</div>`:""}
       ${s.notes?`<h4>備註</h4><div class="notes">${esc(s.notes)}</div>`:""}
       <div class="bigtot" style="margin-top:12px">
-        <div><b class="mono" style="border:2px solid var(--paper-ink);border-radius:99px;padding:4px 16px">${s.fault?"未通過 / "+esc(s.fault):"通過"}</b><span>判定（依單位門檻）</span></div>
+        <div><b class="mono" style="border:2px solid var(--paper-ink);border-radius:99px;padding:4px 16px">${verdictOf(s,sc).verdict}</b><span>${esc(verdictOf(s,sc).reason)}</span></div>
       </div>
       <div class="sigs"><div class="sg">考官簽名</div><div class="sg">考生簽名</div></div>
     </div>
@@ -697,6 +697,7 @@ function printSheetHTML(id){
     <div style="font-size:10px;letter-spacing:.2em;color:#666;margin:2px 0 10px;text-transform:uppercase">${esc(LANES[s.form.lane])} · LEVEL ${esc(s.form.level)} · ${esc(s.form.name)} · 2020B5</div>
     <table style="border-collapse:collapse;margin-bottom:8px">${kvd.join("")}</table>
     <div style="font-size:11px;font-weight:700;border-bottom:1.5px solid #222;margin:8px 0 6px">對齊 ${sc.align}/${sc.alignMax} · 缺口 ${sc.gap}/${sc.gapMax} · 總分 ${sc.total}/${sc.totalMax}</div>
+    <div style="font-size:12px;margin:4px 0;padding:5px 8px;border:1.5px solid #222;display:inline-block;font-weight:800">判定：${verdictOf(s,sc).verdict}（${verdictOf(s,sc).reason}）</div>
     <div>${ag}</div>
     <div style="font-size:11px;font-weight:700;border-bottom:1.5px solid #222;margin:8px 0 6px">Gap Directions（實心＝正確）</div>
     <div>${gg}</div>
