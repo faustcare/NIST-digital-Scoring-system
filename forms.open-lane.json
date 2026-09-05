@@ -4,7 +4,12 @@
     "based_on": "NIST Standard Test Methods for sUAS (2020B5) — Open/Obstructed Test Lane Forms Book",
     "source": "https://www.nist.gov/system/files/documents/2021/02/12/NIST%20sUAS%20Open%20Test%20Lane%20-%20Forms%20Book.pdf",
     "note": "依 NIST 2020B5 Forms Book。Open/Obstructed/Confined 標準表單：green 對齊 pass=5/partial=1/miss=0；blue 缺口 correct=5。Scenario：對齊與缺口皆可配置（缺省對齊 5／缺口 5）。",
-    "count_forms": 19
+    "count_forms": 19,
+    "passing": {
+      "min_score": null,
+      "time_limit_fail": true,
+      "note": "min_score 設為數值即啟用自動判定；null=不自動判定（依單位人工判定）"
+    }
   },
   "bucket_spec": {
     "rows": [
