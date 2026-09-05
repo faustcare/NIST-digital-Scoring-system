@@ -1,0 +1,227 @@
+{
+  "meta": {
+    "title": "NIST sUAS 數位評分表單庫",
+    "based_on": "NIST Standard Test Methods for sUAS (2020B5) — Open/Obstructed Test Lane Forms Book",
+    "source": "https://www.nist.gov/system/files/documents/2021/02/12/NIST%20sUAS%20Open%20Test%20Lane%20-%20Forms%20Book.pdf",
+    "note": "依 NIST 2020B5 Forms Book。Open/Obstructed/Confined 標準表單：green 對齊 pass=5/partial=1/miss=0；blue 缺口 correct=5。Scenario：對齊與缺口皆可配置（缺省對齊 5／缺口 5）。",
+    "count_forms": 19
+  },
+  "bucket_spec": {
+    "rows": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "stands": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "count": 20,
+    "label": "每行代表一列 bucket；每格為 1 個指定目標（target）"
+  },
+  "points": {
+    "align_pass": 5,
+    "align_partial": 1,
+    "align_miss": 0,
+    "gap_correct": 5,
+    "gap_wrong": 0
+  },
+  "forms": [
+    {
+      "id": "open-position",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Position",
+      "title": "Open Lane · Position 定位",
+      "time_limit_minutes": 10,
+      "desc": "起降平台出發，與各指定 bucket 依序對齊"
+    },
+    {
+      "id": "open-traverse",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Traverse",
+      "title": "Open Lane · Traverse 穿越",
+      "time_limit_minutes": 10,
+      "desc": "前 3 stand 繞行 2 圈，外側 bucket 依序對齊"
+    },
+    {
+      "id": "open-orbit",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Orbit",
+      "title": "Open Lane · Orbit 環繞",
+      "time_limit_minutes": 10,
+      "desc": "由 orbit 中心等半徑 S 與高度 S 環繞，4 個外側 bucket 對齊"
+    },
+    {
+      "id": "open-spiral",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Spiral",
+      "title": "Open Lane · Spiral 螺旋",
+      "time_limit_minutes": 10,
+      "desc": "自由飛行，依指定順序對齊每根 stand 的全部 bucket"
+    },
+    {
+      "id": "open-recon",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Recon",
+      "title": "Open Lane · Recon 偵察",
+      "time_limit_minutes": 10,
+      "desc": "對齊兩端 landing 與 bucket，低空偵察指定目標"
+    },
+    {
+      "id": "obs-wall90",
+      "lane": "obstructed",
+      "level": "4",
+      "name": "Wall (90°)",
+      "title": "Obstructed Lane · Wall 90°",
+      "time_limit_minutes": 10,
+      "desc": "垂直牆面 90° 障礙，雙 bucket 對齊辨識目標"
+    },
+    {
+      "id": "obs-wall45",
+      "lane": "obstructed",
+      "level": "4",
+      "name": "Wall (45°)",
+      "title": "Obstructed Lane · Wall 45°",
+      "time_limit_minutes": 10,
+      "desc": "45° 斜牆障礙，雙 bucket 對齊辨識目標"
+    },
+    {
+      "id": "obs-ground",
+      "lane": "obstructed",
+      "level": "4",
+      "name": "Ground",
+      "title": "Obstructed Lane · Ground 地面",
+      "time_limit_minutes": 10,
+      "desc": "地面高度障礙，雙 bucket 對齊辨識目標"
+    },
+    {
+      "id": "obs-post",
+      "lane": "obstructed",
+      "level": "4",
+      "name": "Post",
+      "title": "Obstructed Lane · Post 立柱",
+      "time_limit_minutes": 10,
+      "desc": "垂直立柱障礙，雙 bucket 對齊辨識目標"
+    },
+    {
+      "id": "obs-avoid",
+      "lane": "obstructed",
+      "level": "4",
+      "name": "Avoid",
+      "title": "Obstructed Lane · Avoid 閃避",
+      "time_limit_minutes": 10,
+      "desc": "已知障礙位之間 figure-8 穿越"
+    },
+    {
+      "id": "con-wall90",
+      "lane": "confined",
+      "level": "5",
+      "name": "Wall (90°)",
+      "title": "Confined Lane · Wall 90°",
+      "time_limit_minutes": 10,
+      "desc": "Confined 為 Obstructed 一半場地，程序與計分相同"
+    },
+    {
+      "id": "con-wall45",
+      "lane": "confined",
+      "level": "5",
+      "name": "Wall (45°)",
+      "title": "Confined Lane · Wall 45°",
+      "time_limit_minutes": 10,
+      "desc": "Confined 為 Obstructed 一半場地，程序與計分相同"
+    },
+    {
+      "id": "con-ground",
+      "lane": "confined",
+      "level": "5",
+      "name": "Ground",
+      "title": "Confined Lane · Ground 地面",
+      "time_limit_minutes": 10,
+      "desc": "Confined 為 Obstructed 一半場地，程序與計分相同"
+    },
+    {
+      "id": "con-post",
+      "lane": "confined",
+      "level": "5",
+      "name": "Post",
+      "title": "Confined Lane · Post 立柱",
+      "time_limit_minutes": 10,
+      "desc": "Confined 為 Obstructed 一半場地，程序與計分相同"
+    },
+    {
+      "id": "con-avoid",
+      "lane": "confined",
+      "level": "5",
+      "name": "Avoid",
+      "title": "Confined Lane · Avoid 閃避",
+      "time_limit_minutes": 10,
+      "desc": "Confined 為 Obstructed 一半場地，程序與計分相同"
+    },
+    {
+      "id": "scen-veh-fuel",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Scenario · Fuel Truck",
+      "title": "Scenario · Vehicle Inspection（Fuel Truck）",
+      "time_limit_minutes": 10,
+      "desc": "油罐車外部/內部特徵定位與辨識",
+      "kind": "scenario",
+      "scenType": "veh",
+      "scenVehicle": "fuel"
+    },
+    {
+      "id": "scen-veh-box",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Scenario · Box Truck",
+      "title": "Scenario · Vehicle Inspection（Box Truck）",
+      "time_limit_minutes": 10,
+      "desc": "箱型車外部/內部特徵定位與辨識",
+      "kind": "scenario",
+      "scenType": "veh",
+      "scenVehicle": "box"
+    },
+    {
+      "id": "scen-wide-area",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Scenario · Wide Area Search",
+      "title": "Scenario · Wide Area Search 廣域搜索",
+      "time_limit_minutes": 10,
+      "desc": "4 座 stand 位置；每站 top/左轉 A–D 依序辨識目標",
+      "kind": "scenario",
+      "scenType": "was"
+    },
+    {
+      "id": "scen-obs-1-10",
+      "lane": "obstructed",
+      "level": "4",
+      "name": "Scenario 1–10",
+      "title": "Obstructed Lane · Scenario 1–10",
+      "time_limit_minutes": 10,
+      "desc": "10 站 × Straight/Angled 桶；各 5 分對齊（forward/reverse 循線）",
+      "kind": "scenario",
+      "scenType": "obs10"
+    },
+    {
+      "id": "sensor-1-5",
+      "lane": "open",
+      "level": "1-3",
+      "name": "Sensor (SENSING 1-5)",
+      "title": "Open Lane · Sensor 感測 1–5（Point/Zoom）",
+      "time_limit_minutes": 10,
+      "desc": "4 面板（A 近2S~D 遠6S）× 5 感測（Visual/Color/Hazmat/Motion/Thermal）；Quick 或 Comprehensive",
+      "kind": "scenario",
+      "scenType": "sensor"
+    }
+  ]
+}
