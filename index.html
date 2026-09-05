@@ -133,6 +133,9 @@ textarea.ftextarea{resize:vertical;min-height:64px;font-family:var(--sans)}
   -webkit-tap-highlight-color:transparent;transition:transform .05s ease;user-select:none;
 }
 .cell:active{transform:scale(.92)}
+.cell.lp{transform:scale(.82);border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.cell.linked{animation:linkflash .5s ease}
+@keyframes linkflash{0%{box-shadow:0 0 0 0 var(--blue)}40%{box-shadow:0 0 0 6px var(--blue-soft)}100%{box-shadow:0 0 0 0 transparent}}
 .cell:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .cell .pts{position:absolute;right:-3px;bottom:-3px;font-size:8px;font-weight:700;font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:0 4px;line-height:14px}
 .cell.pass{border:2.5px solid var(--green);background:var(--green-soft);color:var(--green)}
@@ -739,6 +742,44 @@ function updateCell(id,el,code,handlers){
   if(handlers[0]==="pass"){if(v==="pass")el.classList.add("pass");else if(v==="partial")el.classList.add("partial");else if(v==="miss")el.classList.add("miss")}
   else{if(v==="ok")el.classList.add("ok");else if(v==="no")el.classList.add("no")}
   el.setAttribute("data-code",code);
+}
+/* ---------- M3 UX: haptics + long-press undo + linked gap ---------- */
+function buzz(ms){
+  try{if(navigator.vibrate&&typeof navigator.vibrate==="function")navigator.vibrate(ms||15)}catch(e){}
+}
+function linkGap(id,code){
+  const s=getSession(id);if(!s||s.status==="done")return;
+  const g="G"+code;const cur=s.scores&&s.scores[g];
+  const next=cur==="ok"?"no":"ok";
+  s.scores=s.scores||{};
+  if(next==="no")delete s.scores[g];else s.scores[g]=next;
+  s.savedAt=Date.now();saveSession(s);
+  const el=document.querySelector(`#g-gap [data-code="${g}"]`);
+  if(el){updateCell(id,el,g,["ok","no"]);el.classList.add("linked");setTimeout(()=>el.classList.remove("linked"),500)}
+}
+function bindCellUX(id,el){
+  let lpTimer=null,lpFired=false,startX=0,startY=0,dx=0,dy=0;
+  const clear=()=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null}el.classList.remove("lp")};
+  const fire=()=>{lpFired=true;buzz(35);el.classList.add("lp");clear()};
+  el.addEventListener("touchstart",e=>{
+    const t=e.touches[0];startX=t.clientX;startY=t.clientY;dx=0;dy=0;lpFired=false;
+    lpTimer=setTimeout(fire,430);
+  },{passive:true});
+  el.addEventListener("touchmove",e=>{
+    const t=e.touches[0];dx=Math.abs(t.clientX-startX);dy=Math.abs(t.clientY-startY);
+    if(dx>10||dy>10)clear();
+  },{passive:true});
+  el.addEventListener("touchend",e=>{
+    clear();
+    if(lpFired){e.preventDefault();e.stopPropagation();const code=el.dataset.code;const kind=el.dataset.kind;
+      const s=getSession(id);if(s&&s.scores&&s.scores[code]){delete s.scores[code];s.savedAt=Date.now();saveSession(s);updateCell(id,el,code,kind==="gap"?["ok","no"]:["pass","partial","miss"]);renderTotal(s);toast("已復原 "+code)}
+      return}
+    if(dx<10&&dy<10){buzz(12);el.click()}
+  },{passive:false});
+  el.addEventListener("mousedown",()=>{lpTimer=setTimeout(fire,430)});
+  el.addEventListener("mousemove",()=>{if(dx>10||dy>10)clear()});
+  el.addEventListener("mouseup",()=>{clear();if(lpFired){const code=el.dataset.code;const kind=el.dataset.kind;const s=getSession(id);if(s&&s.scores&&s.scores[code]){delete s.scores[code];s.savedAt=Date.now();saveSession(s);updateCell(id,el,code,kind==="gap"?["ok","no"]:["pass","partial","miss"]);renderTotal(s);toast("已復原 "+code)}}});
+  el.addEventListener("mouseleave",clear);
 }
 function renderTimer(s){
   const el=$("#timerBox");if(!el)return;const ms=elapsedMs(s),lim=s.trial.time_limit_min*60000;
