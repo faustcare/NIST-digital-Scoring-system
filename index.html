@@ -408,6 +408,21 @@ async function supabaseClient(){
   const sb=await loadSupabaseLib();
   return sb.createClient(cfg.url,cfg.anonKey);
 }
+function functionsBase(){const cfg=supabaseCfg();if(!cfg||!cfg.enabled||!cfg.functionsUrl)return null;return cfg.functionsUrl.replace(/\/$/,"")}
+async function apiFetch(name,path,opts){
+  const c=await supabaseClient();if(!c)return{ok:false,err:"cloud off"};
+  const {data:{session}}=await c.auth.getSession();const au=authUser();
+  if(!session||!au)return{ok:false,err:"no-auth"};
+  const base=functionsBase();
+  if(!base)return{ok:false,err:"no-functions-url"};
+  const url=base+"/"+name+(path||"");
+  try{
+    const res=await fetch(url,{method:opts&&opts.method||"GET",headers:{Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},body:opts&&opts.body?JSON.stringify(opts.body):undefined});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok)return{ok:false,err:(j&&j.error)||("HTTP "+res.status)};
+    return{ok:true,data:j&&j.data};
+  }catch(e){return{ok:false,err:e&&e.message||"network"}}
+}
 async function testSupabase(){
   const cfg=supabaseCfg();if(!cfg)return {ok:false,msg:"尚未設定"};
   try{const sb=await loadSupabaseLib();const c=sb.createClient(cfg.url,cfg.anonKey);
@@ -418,16 +433,17 @@ async function testSupabase(){
 async function syncAll(){
   const c=await supabaseClient();if(!c)return {ok:false,msg:"雲端同步未啟用"};
   const au=authUser();if(!au)return {ok:false,msg:"請先登入（帳號登入）才能同步"};
+  const base=functionsBase();if(!base)return {ok:false,msg:"需在雲端設定填入 Edge Functions URL（正式架構走 API）"};
   const sessions=listSessions();let up=0;
   for(const s of sessions){
-    const row={local_id:s.id,form_id:s.formId,proctor_id:au.id,candidate:s.trial.candidate,aircraft_make:s.trial.aircraft_make,aircraft_model:s.trial.aircraft_model,payload:s.trial.payload,personnel:s.trial.personnel,facility:s.trial.facility,trial_date:s.trial.date,trial_time:s.trial.time,lane_no:s.trial.lane_no,lane_spacing:s.trial.lane_spacing,lighting:s.trial.lighting,wind_avg:s.trial.wind_avg,wind_gust:s.trial.wind_gust,pilot_view:s.trial.pilot_view,time_limit_min:s.trial.time_limit_min,time_elapsed_ms:elapsedMs(s),scoring_source:s.trial.scoring_source,status:s.status,fault_code:s.fault||"",notes:s.notes||"",scores:s.scores||{}};
-    const {error}=await c.from("sessions").upsert(row,{onConflict:"local_id"});
-    if(!error)up++;
+    const row={local_id:s.id,form_id:s.formId,candidate:s.trial.candidate,aircraft_make:s.trial.aircraft_make,aircraft_model:s.trial.aircraft_model,payload:s.trial.payload,personnel:s.trial.personnel,facility:s.trial.facility,trial_date:s.trial.date,trial_time:s.trial.time,lane_no:s.trial.lane_no,lane_spacing:s.trial.lane_spacing,lighting:s.trial.lighting,wind_avg:s.trial.wind_avg,wind_gust:s.trial.wind_gust,pilot_view:s.trial.pilot_view,time_limit_min:s.trial.time_limit_min,time_elapsed_ms:elapsedMs(s),scoring_source:s.trial.scoring_source,status:s.status,fault_code:s.fault||"",notes:s.notes||"",scores:s.scores||{}};
+    const r=await apiFetch("sessions","",{method:"POST",body:row});
+    if(r.ok&&r.data)up++;else if(r.err==="no-functions-url")return {ok:false,msg:"需填 Edge Functions URL"};
   }
-  const {data,error}=await c.from("sessions").select("*").order("created_at",{ascending:false});
-  if(error)return {ok:false,msg:error.message};
+  const lr=await apiFetch("sessions","");
+  if(!lr.ok)return {ok:false,msg:lr.err||"無法取得遠端場次"};
   let down=0;
-  for(const r of data||[]){
+  for(const r of lr.data||[]){
     if(!r.local_id||getSession(r.local_id))continue;
     const f=getForm(r.form_id);
     const s={id:r.local_id,formId:r.form_id,form:f?{id:f.id,lane:f.lane,level:f.level,name:f.name,title:f.title,time_limit_minutes:f.time_limit_minutes}:{id:r.form_id,title:r.form_id},_kind:"bucket",_items:[],
@@ -435,7 +451,7 @@ async function syncAll(){
       scores:r.scores||{},fault:r.fault_code||"",notes:r.notes||"",timer:{startedAt:null,accum:r.time_elapsed_ms||0,running:false},status:r.status||"draft",createdAt:Date.parse(r.created_at)||Date.now(),savedAt:Date.now()};
     saveSession(s);down++;
   }
-  return {ok:true,msg:"上傳 "+up+" 筆、下載 "+down+" 筆"};
+  return {ok:true,msg:"上傳 "+up+" 筆、下載 "+down+" 筆（Edge Functions 架構）"};
 }
 function newSession(formId,trial,forceId){
   const f=getForm(formId);if(!f)return null;
@@ -1137,6 +1153,9 @@ function vForms(){
       <input class="finput" id="sb-url" placeholder="https://xxxxxx.supabase.co" value="${esc((supabaseCfg()||{}).url||'')}">
       <div class="flabel">anon public key</div>
       <input class="finput" id="sb-key" placeholder="eyJhbGciOi…" value="${esc((supabaseCfg()||{}).anonKey||'')}">
+      <div class="flabel">Edge Functions URL（正式架構）</div>
+      <input class="finput" id="sb-fnurl" placeholder="https://xxxx.supabase.co/functions/v1" value="${esc((supabaseCfg()||{}).functionsUrl||'')}">
+      <div class="meta" style="margin-top:2px">正式架構：填入 Functions URL 後，「立即同步」改走 Edge Functions（sessions/report/media-upload）而不再直連 DB。</div>
       <div class="btnrow">
         <button class="btn primary" id="b-sb-enable">啟用／儲存</button>
         <button class="btn ghost" id="b-sb-test">測試連線</button>
@@ -1147,16 +1166,17 @@ function vForms(){
     </div>`;
     const sbStat=function(msg,ok){const el=$("#sb-status");if(!el)return;el.innerHTML=ok?'<span style="color:var(--green)">✓ '+esc(msg)+'</span>':'<span style="color:var(--red)">✕ '+esc(msg)+'</span>';};
   $("#b-sb-enable").onclick=async()=>{
-    const url=$("#sb-url").value.trim(),key=$("#sb-key").value.trim();
+    const url=$("#sb-url").value.trim(),key=$("#sb-key").value.trim(),fnurl=$("#sb-fnurl").value.trim();
     if(!url||!key){sbStat("請填 URL 與 anon key",false);return}
-    saveSupabaseCfg({url,anonKey:key,enabled:true});sbStat("已儲存並啟用；建議先測試連線",true);vForms();
+    saveSupabaseCfg({url,anonKey:key,functionsUrl:fnurl||undefined,enabled:true});sbStat("已儲存並啟用；建議先測試連線",true);vForms();
   };
   $("#b-sb-test").onclick=async()=>{
-    const url=$("#sb-url").value.trim(),key=$("#sb-key").value.trim();
+    const url=$("#sb-url").value.trim(),key=$("#sb-key").value.trim(),fnurl=$("#sb-fnurl").value.trim();
     if(!url||!key){sbStat("請先填 URL 與 anon key",false);return}
-    saveSupabaseCfg({url,anonKey:key,enabled:true});
+    saveSupabaseCfg({url,anonKey:key,functionsUrl:fnurl||undefined,enabled:true});
     sbStat("測試中…",true);
-    const r=await testSupabase();sbStat(r.msg,r.ok);
+    if(fnurl){const r=await apiFetch("sessions","");sbStat(r.ok?"Functions 連線成功（"+r.data.length+" 筆）":"Functions 失敗："+(r.err||""),r.ok)}
+    else{const r=await testSupabase();sbStat(r.msg,r.ok)}
   };
   $("#b-sb-sync").onclick=async()=>{
     sbStat("同步中…",true);
