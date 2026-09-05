@@ -346,6 +346,20 @@ function scoreOf(s){
     const g=gapFor(it.code,s.formId);if(g&&s.scores&&s.scores[g]==="ok")gap+=pt.gap_correct;}
   return {align,gap,total:align+gap,alignMax,gapMax,totalMax:alignMax+gapMax};
 }
+function verdictOf(s,sc){
+  const rule=(effForms().meta&&effForms().meta.passing)||null;
+  const exceeded = (s.trial.time_limit_min||0)>0 && elapsedMs(s) > (s.trial.time_limit_min*60000);
+  let verdict,reason;
+  if(rule&&rule.min_score){
+    const ok = !s.fault && sc.total>=rule.min_score && (!rule.time_limit_fail || !exceeded);
+    verdict=ok?"通過":"未通過";
+    reason="門檻 ≥"+rule.min_score+" 分"+(rule.time_limit_fail?" · 時限內":"");
+    if(s.fault)reason+=" · "+s.fault;
+    if(exceeded)reason+=" · 逾時";
+  } else if(s.fault){ verdict="未通過"; reason=s.fault; }
+  else { verdict="通過"; reason="依單位門檻"; }
+  return {verdict,reason,rule:!!(rule&&rule.min_score)};
+}
 /* ---------- toast ---------- */
 let toastT;function toast(msg){const el=$("#toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),1600)}
 /* ---------- router ---------- */
