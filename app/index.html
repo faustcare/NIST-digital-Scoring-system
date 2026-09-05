@@ -343,6 +343,53 @@ function delSession(id){lsSet(LS_SESS,lsGet(LS_SESS,[]).filter(s=>s.id!==id))}
 /* ---------- supabase cloud sync (optional) ---------- */
 function supabaseCfg(){return lsGet("nist_supabase_cfg",null)}
 function saveSupabaseCfg(c){lsSet("nist_supabase_cfg",c)}
+/* ---------- supabase auth (accounts + roles) ---------- */
+let _authUser=null;
+function authUser(){return _authUser||lsGet("nist_auth_user",null)}
+function authChipHtml(){
+  const u=lsGet("nist_auth_user",null);
+  return u
+    ? `<button class="btn small ghost" id="tb-auth" title="登出 ${esc(u.email)}">${esc((u.email||"").split("@")[0])} · 登出</button>`
+    : `<button class="btn small ghost" id="tb-auth">登入</button>`;
+}
+function renderAuthChip(){
+  const el=document.getElementById("tb-auth");if(!el)return;
+  el.onclick=async()=>{
+    if(lsGet("nist_auth_user",null)){await sbSignOut();toast("已登出");route();}
+    else location.hash="#/auth";
+  };
+}
+async function refreshAuthUser(){
+  try{
+    const c=await supabaseClient();if(!c){_authUser=null;localStorage.removeItem("nist_auth_user");renderAuthChip();return null}
+    const {data:{session}}=await c.auth.getSession();
+    if(session&&session.user){
+      const u={id:session.user.id,email:session.user.email,role:"proctor",full_name:""};
+      const {data:pf}=await c.from("profiles").select("role,full_name").eq("id",session.user.id).maybeSingle();
+      if(pf){if(pf.role)u.role=pf.role;if(pf.full_name)u.full_name=pf.full_name}
+      _authUser=u;lsSet("nist_auth_user",u);
+    } else {_authUser=null;localStorage.removeItem("nist_auth_user")}
+    renderAuthChip();return _authUser;
+  }catch(e){_authUser=null;return null}
+}
+async function initAuth(){await refreshAuthUser()}
+async function sbSignIn(email,pw){
+  const c=await supabaseClient();if(!c)return{ok:false,msg:"未設定 Supabase（請先到表單管理填 URL/key）"};
+  const {error}=await c.auth.signInWithPassword({email,password:pw});
+  if(error)return{ok:false,msg:error.message};
+  await refreshAuthUser();return{ok:true,msg:"登入成功"};
+}
+async function sbSignUp(email,pw,fullName){
+  const c=await supabaseClient();if(!c)return{ok:false,msg:"未設定 Supabase"};
+  const {data,error}=await c.auth.signUp({email,password:pw,options:{data:{full_name:fullName}}});
+  if(error)return{ok:false,msg:error.message};
+  if(data&&data.session){await refreshAuthUser();return{ok:true,msg:"註冊並登入成功"}}
+  return{ok:true,msg:"註冊成功，請至信箱驗證後再登入"};
+}
+async function sbSignOut(){
+  const c=await supabaseClient();if(c)try{await c.auth.signOut()}catch(e){}
+  _authUser=null;localStorage.removeItem("nist_auth_user");renderAuthChip();
+}
 function loadSupabaseLib(){
   return new Promise((res,rej)=>{
     if(window.__supabase){res(window.__supabase);return}
@@ -367,9 +414,10 @@ async function testSupabase(){
 }
 async function syncAll(){
   const c=await supabaseClient();if(!c)return {ok:false,msg:"雲端同步未啟用"};
+  const au=authUser();if(!au)return {ok:false,msg:"請先登入（帳號登入）才能同步"};
   const sessions=listSessions();let up=0;
   for(const s of sessions){
-    const row={local_id:s.id,form_id:s.formId,candidate:s.trial.candidate,aircraft_make:s.trial.aircraft_make,aircraft_model:s.trial.aircraft_model,payload:s.trial.payload,personnel:s.trial.personnel,facility:s.trial.facility,trial_date:s.trial.date,trial_time:s.trial.time,lane_no:s.trial.lane_no,lane_spacing:s.trial.lane_spacing,lighting:s.trial.lighting,wind_avg:s.trial.wind_avg,wind_gust:s.trial.wind_gust,pilot_view:s.trial.pilot_view,time_limit_min:s.trial.time_limit_min,time_elapsed_ms:elapsedMs(s),scoring_source:s.trial.scoring_source,status:s.status,fault_code:s.fault||"",notes:s.notes||"",scores:s.scores||{}};
+    const row={local_id:s.id,form_id:s.formId,proctor_id:au.id,candidate:s.trial.candidate,aircraft_make:s.trial.aircraft_make,aircraft_model:s.trial.aircraft_model,payload:s.trial.payload,personnel:s.trial.personnel,facility:s.trial.facility,trial_date:s.trial.date,trial_time:s.trial.time,lane_no:s.trial.lane_no,lane_spacing:s.trial.lane_spacing,lighting:s.trial.lighting,wind_avg:s.trial.wind_avg,wind_gust:s.trial.wind_gust,pilot_view:s.trial.pilot_view,time_limit_min:s.trial.time_limit_min,time_elapsed_ms:elapsedMs(s),scoring_source:s.trial.scoring_source,status:s.status,fault_code:s.fault||"",notes:s.notes||"",scores:s.scores||{}};
     const {error}=await c.from("sessions").upsert(row,{onConflict:"local_id"});
     if(!error)up++;
   }
@@ -434,6 +482,7 @@ function route(){
   else if(h.startsWith("#/score/"))vScore(h.slice(8));
   else if(h.startsWith("#/result/"))vResult(h.slice(9));
   else if(h==="#/result/demo")bootResultDemo();
+  else if(h==="#/auth")vAuth();
   else if(h==="#/history")vHistory();
   else if(h==="#/forms")vForms();
   else vHome();
@@ -442,6 +491,54 @@ function route(){
 window.addEventListener("hashchange",route);
 function bottom(html){const b=$("#bottombar");if(html){b.innerHTML='<div class="inner" id="bbinner">'+html+"</div>";b.classList.remove("hidden")}else{b.classList.add("hidden");b.innerHTML=''}}
 function topbar(html){$("#topbar").innerHTML='<div class="brand"><div class="ringlogo"></div><div><div class="ttl">'+(html.ttl||"NIST 數位評分")+'</div><div class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</div></div></div>'+(html.right||'')}
+/* ═══════════ VIEW: AUTH ═══════════ */
+function vAuth(){
+  topbar({ttl:"帳號登入",sub:"SUPABASE AUTH · 多人共用"});
+  const u=authUser();
+  if(u){
+    $("#view").innerHTML=`
+      <div class="eyebrow">已登入</div>
+      <h1 class="viewttl">${esc(u.email)}</h1>
+      <div class="card" style="margin-top:14px">
+        <h3>角色：<span class="chip ${u.role==="admin"?"hot":"ok"}">${esc(u.role)}</span></h3>
+        <div class="meta">${esc(u.full_name||"")} · 同步時場次歸屬此帳號。admin 可查看全部（RLS），proctor 僅限自己的場次。</div>
+      </div>
+      <div class="btnrow"><button class="btn primary block" id="a-logout">登出</button></div>
+      <div class="btnrow"><button class="btn ghost block" data-goto="#/forms">前往表單管理</button></div>`;
+    document.getElementById("a-logout").onclick=async()=>{await sbSignOut();toast("已登出");vAuth()};
+    document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>location.hash=el.dataset.goto));
+    return;
+  }
+  $("#view").innerHTML=`
+    <div class="eyebrow">SUPABASE AUTH</div>
+    <h1 class="viewttl">登入／註冊</h1>
+    <p class="lede">多人共用：登入後同步的場次歸屬你的帳號（RLS 保護，proctor 只看自己的、admin 看全部）。需先在 Supabase 執行 supabase/schema.sql（含 Auth trigger）。</p>
+    <div class="card" style="margin-top:14px">
+      <div class="flabel">Email</div>
+      <input class="finput" id="a-email" type="email" placeholder="you@example.com">
+      <div class="flabel">密碼</div>
+      <input class="finput" id="a-pw" type="password" placeholder="至少 6 碼">
+      <div class="flabel">姓名（註冊時填）</div>
+      <input class="finput" id="a-name" placeholder="王小明">
+      <div class="btnrow">
+        <button class="btn primary" id="a-login">登入</button>
+        <button class="btn ghost" id="a-signup">註冊</button>
+      </div>
+      <div id="a-status" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
+    </div>`;
+  const st=(m,ok)=>{const el=$("#a-status");if(el)el.innerHTML=ok?'<span style="color:var(--green)">✓ '+esc(m)+'</span>':'<span style="color:var(--red)">✕ '+esc(m)+'</span>'};
+  document.getElementById("a-login").onclick=async()=>{
+    const email=document.getElementById("a-email").value.trim(),pw=document.getElementById("a-pw").value;
+    if(!email||!pw){st("請填 email 與密碼",false);return}
+    st("登入中…",true);const r=await sbSignIn(email,pw);st(r.msg,r.ok);
+    if(r.ok)setTimeout(()=>location.hash="#/forms",600);
+  };
+  document.getElementById("a-signup").onclick=async()=>{
+    const email=document.getElementById("a-email").value.trim(),pw=document.getElementById("a-pw").value,name=document.getElementById("a-name").value.trim();
+    if(!email||pw.length<6){st("請填 email 與至少 6 碼密碼",false);return}
+    st("註冊中…",true);const r=await sbSignUp(email,pw,name);st(r.msg,r.ok);
+  };
+}
 /* ═══════════ VIEW: HOME ═══════════ */
 function vHome(){
   const F=effForms();const pt=F.points;
@@ -670,6 +767,7 @@ function topbarRight(s){
   const tb=$("#topbar");const existing=tb.querySelector("#tb-toggle");
   if(!existing){tb.insertAdjacentHTML("beforeend",right);document.getElementById("tb-toggle").onclick=()=>toggleTimer(s.id)}
   else{const sb=document.getElementById("tb-score");if(sb)sb.textContent=scoreOf(s).total+"分"}
+  renderAuthChip();
   renderTimer(s);
 }
 function toggleTimer(id){
@@ -1008,6 +1106,7 @@ document.addEventListener("click",e=>{
   if(g){e.preventDefault();if(g.dataset.goto==="#/demo"){bootDemo()}else{location.hash=g.dataset.goto;return}}
 });
 route();
+initAuth();
 </script>
 </body>
 </html>

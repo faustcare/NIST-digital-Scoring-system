@@ -118,3 +118,48 @@ create trigger sessions_touch before update on public.sessions
 create index if not exists idx_sessions_proctor on public.sessions(proctor_id);
 create index if not exists idx_sessions_form on public.sessions(form_uuid);
 create index if not exists idx_sessions_status on public.sessions(status);
+
+-- ============================================================
+-- Supabase Auth 支援（多人共用）
+-- 在既有 schema 之後執行（可重複執行）
+-- ============================================================
+
+-- 註冊時自動建立 profile（full_name 取自 signUp 的 metadata）
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, full_name, role)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', new.email), 'proctor')
+  on conflict (id) do nothing;
+  return new;
+end; $$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- profiles RLS：本人可讀自己的；admin 可讀全部
+alter table public.profiles enable row level security;
+
+drop policy if exists "own profile" on public.profiles;
+create policy "own profile" on public.profiles
+  for select using (id = auth.uid());
+
+drop policy if exists "admin all profiles" on public.profiles;
+create policy "admin all profiles" on public.profiles
+  for select using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+  );
+
+-- forms / form_items：所有已登入使用者可讀（表單引擎共用）
+alter table public.forms enable row level security;
+drop policy if exists "forms readable" on public.forms;
+create policy "forms readable" on public.forms for select using (true);
+
+alter table public.form_items enable row level security;
+drop policy if exists "form_items readable" on public.form_items;
+create policy "form_items readable" on public.form_items for select using (true);
+
+-- 提示：將 sessions 的 proctor_id 設為 auth.uid() 後，
+-- 既有「own sessions」RLS 即自動讓 proctor 只看自己的場次、admin 看全部。
