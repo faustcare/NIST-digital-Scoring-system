@@ -201,7 +201,25 @@ textarea.ftextarea{resize:vertical;min-height:64px;font-family:var(--sans)}
 .histrow .hdel:hover{color:var(--red);border-color:var(--red)}
 .empty{text-align:center;color:var(--faint);padding:44px 12px;font-size:13px;line-height:1.8}
 .empty .big{font-size:34px;margin-bottom:6px}
-/* forms mgmt */
+/* history filters & report */
+.filters{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.frow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.frow .finput{flex:1;min-width:110px}
+.frow .fselect{flex:1;min-width:110px}
+.fbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer}
+.fbtn.on{background:var(--green);border-color:var(--green);color:#06110c;font-weight:700}
+.fbtn:active{transform:scale(.97)}
+.repstat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.repstat .rs{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.repstat .rs b{display:block;font-family:var(--mono);font-size:18px}
+.repstat .rs span{font-size:10px;color:var(--muted)}
+.warnbox{border:1px solid var(--amber);background:var(--amber-soft);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:12px;line-height:1.6}
+.warnbox b{color:var(--amber)}
+.warnbox .wrow{display:flex;align-items:center;gap:6px;margin-top:4px}
+.warnbox .wrow .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block}
+.warnbox .wrow .wbtn{margin-left:auto;background:transparent;border:1px solid var(--amber);color:var(--amber);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer}
+.histrow .hmain .hscore{font-size:12px;font-weight:700;color:var(--green);font-family:var(--mono)}
+
 .jsonwrap{background:#0a0d13;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:#b7c0d4;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-all}
 .formcount{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .formcount .fc{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center;font-size:10px;color:var(--muted)}
@@ -803,28 +821,95 @@ function exportCSV(id){
 /* ═══════════ VIEW: HISTORY ═══════════ */
 function vHistory(){
   const all=listSessions();
-  topbar({ttl:"歷次場次",sub:"HISTORY"});
-  const rows=all.map(s=>{
-    const sc=scoreOf(s);const t=s.trial;
-    const st= s.status==="done"?'<span class="chip ok">已提交</span>':(s.timer.running?'<span class="chip">進行中</span>':'<span class="chip">草稿</span>');
+  topbar({ttl:"歷史報表",sub:"HISTORY · REPORT"});
+  const lanes=["open","obstructed","confined"];
+  const levels=[...new Set(all.map(x=>x.form&&x.form.level).filter(Boolean))];
+  const laneFilter=lsGet("hist_lane","all");
+  const levelFilter=lsGet("hist_level","all");
+  const q=(lsGet("hist_q","")).toLowerCase();
+  const dateFrom=lsGet("hist_from",""),dateTo=lsGet("hist_to","");
+  const filtered=all.filter(x=>{
+    if(laneFilter!=="all"&&x.form.lane!==laneFilter)return false;
+    if(levelFilter!=="all"&&String(x.form.level)!==String(levelFilter))return false;
+    if(q){const hay=(x.trial.candidate||"")+" "+(x.form.title||"")+" "+(x.trial.facility||"");if(!hay.toLowerCase().includes(q))return false}
+    if(dateFrom&&x.trial.date&&x.trial.date<dateFrom)return false;
+    if(dateTo&&x.trial.date&&x.trial.date>dateTo)return false;
+    return true;
+  });
+  const done=filtered.filter(x=>x.status==="done");
+  const avg=done.length?Math.round(done.reduce((a,x)=>a+scoreOf(x).total,0)/done.length):0;
+  const max=done.length?Math.max(...done.map(x=>scoreOf(x).total)):0;
+  const conds=(x)=>{const t=x.trial;return [t.lane_spacing?("S="+t.lane_spacing+"m"):null,t.lighting,t.pilot_view,(t.time_limit_min?t.time_limit_min+"min":null)].filter(Boolean).join(" · ")};
+  const condKey=x=>JSON.stringify([x.trial.lane_spacing,x.trial.lighting,x.trial.pilot_view,x.trial.time_limit_min]);
+  const warn=[];
+  const grp=Object.groupBy?Object.groupBy(done,x=>condKey(x)):null;
+  if(grp){for(const k of Object.keys(grp)){if(grp[k].length>1)warn.push({key:k,list:grp[k]})}}
+  const rows=filtered.map(x=>{
+    const sc=scoreOf(x);const t=x.trial;
+    const st=x.status==="done"?'<span class="chip ok">已提交</span>':(x.timer.running?'<span class="chip">進行中</span>':'<span class="chip">草稿</span>');
+    const vd=verdictOf(x,sc);
     return `<div class="histrow">
-      <div class="hmain" data-goto="#/result/${s.id}">
-        <div class="hname">${esc(t.candidate||"（未填考生）")} · ${esc(s.form.title)}</div>
-        <div class="hmeta">${esc(t.date+" "+t.time)} · ${sc.total}/${sc.totalMax} 分 · ${esc(fmtClock(elapsedMs(s)))}</div>
+      <div class="hmain" data-goto="#/result/${x.id}">
+        <div class="hname">${esc(t.candidate||"（未填考生）")} · ${esc(x.form.title)}</div>
+        <div class="hmeta">${esc(t.date+" "+t.time)} · ${esc(conds(x))}</div>
+        <div class="hscore">${sc.total}/${sc.totalMax} 分 · ${esc(vd.verdict)}</div>
       </div>
       ${st}
-      <button class="hdel" data-del="${s.id}" aria-label="刪除">✕</button>
+      <button class="hdel" data-del="${x.id}" aria-label="刪除">✕</button>
     </div>`;
   }).join("");
-  $("#view").innerHTML= all.length?
-    `<div class="eyebrow">${all.length} 筆場次</div><h1 class="viewttl">歷次場次</h1>${rows}`:
-    `<div class="empty"><div class="big">◎</div>還沒有任何場次。<br>從「表單庫」選一張表單開始第一次評分。</div>
-     <div class="btnrow"><button class="btn primary block" data-goto="#/home">前往表單庫</button></div>`;
-  document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>location.hash=el.dataset.goto));
-  document.querySelectorAll(".hdel").forEach(el=>el.addEventListener("click",()=>{
-    if(confirm("確定刪除這場次紀錄？")){delSession(el.dataset.del);toast("已刪除");vHistory()}
-  }));
+  const warnHtml=warn.length?'<div class="warnbox"><b>⚠ 條件可比性警告</b><div style="margin-top:4px">以下場次雖然「已提交」，但條件（間距／照明／Pilot View／時限）不同，官方規範成績不應互相比較：</div>'+
+    warn.map(w=>`<div class="wrow"><span class="dot"></span><span>${esc(w.key)} × ${w.list.length} 筆</span><button class="wbtn" data-wkey="${esc(w.key)}">只看這組</button></div>`).join("")+'</div>':'';
+  $("#view").innerHTML=`
+    <div class="eyebrow">${filtered.length} 筆 / ${all.length} 總場次</div>
+    <h1 class="viewttl">歷史報表</h1>
+    <div class="filters">
+      <div class="frow">
+        <input class="finput" id="f-q" placeholder="搜尋考生／表單／設施" value="${esc(q)}">
+        <input class="finput" type="date" id="f-from" value="${esc(dateFrom)}"><span style="color:var(--faint);font-size:11px">至</span>
+        <input class="finput" type="date" id="f-to" value="${esc(dateTo)}">
+      </div>
+      <div class="frow">
+        <select class="fselect" id="f-lane">${["all","open","obstructed","confined"].map(l=>`<option value="${l}" ${laneFilter===l?"selected":""}>${l==="all"?"全部場道":LANES[l]}</option>`).join("")}</select>
+        <select class="fselect" id="f-level">${["all",...levels].map(l=>`<option value="${l}" ${String(levelFilter)===String(l)?"selected":""}>${l==="all"?"全部 Level":"Level "+l}</option>`).join("")}</select>
+        <button class="fbtn" id="f-reset">重設</button>
+      </div>
+    </div>
+    <div class="repstat">
+      <div class="rs"><b>${done.length}</b><span>已提交</span></div>
+      <div class="rs"><b>${avg}</b><span>平均分</span></div>
+      <div class="rs"><b>${max}</b><span>最高分</span></div>
+    </div>
+    ${warnHtml}
+    ${filtered.length?rows:'<div class="empty"><div class="big">◎</div>沒有符合條件的場次。</div>'}
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn ghost block" id="f-export">匯出報表 CSV</button>
+    </div>`;
+  const bind=()=>{
+    const el=id=>document.getElementById(id);
+    el("f-q").addEventListener("input",e=>{lsSet("hist_q",e.target.value);vHistory()});
+    el("f-from").addEventListener("change",e=>{lsSet("hist_from",e.target.value);vHistory()});
+    el("f-to").addEventListener("change",e=>{lsSet("hist_to",e.target.value);vHistory()});
+    el("f-lane").addEventListener("change",e=>{lsSet("hist_lane",e.target.value);vHistory()});
+    el("f-level").addEventListener("change",e=>{lsSet("hist_level",e.target.value);vHistory()});
+    el("f-reset").onclick=()=>{["hist_q","hist_from","hist_to","hist_lane","hist_level"].forEach(k=>localStorage.removeItem(k));vHistory()};
+    el("f-export").onclick=()=>exportReport(filtered);
+    document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>location.hash=el.dataset.goto));
+    document.querySelectorAll(".hdel").forEach(el=>el.addEventListener("click",()=>{if(confirm("確定刪除這場次紀錄？")){delSession(el.dataset.del);toast("已刪除");vHistory()}}));
+    document.querySelectorAll(".wbtn").forEach(el=>el.addEventListener("click",()=>{lsSet("hist_q","");lsSet("hist_lane","all");lsSet("hist_level","all");lsSet("hist_from","");lsSet("hist_to","");vHistory()}));
+  };
+  bind();
 }
+function exportReport(rows){
+  const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const out=["考生,表單,場道,Level,日期,時間,間距,照明,Pilot View,時限,用時,對齊,缺口,總分,判定,結束原因"];
+  for(const x of rows){const sc=scoreOf(x),t=x.trial,vd=verdictOf(x,sc);
+    out.push([t.candidate,x.form.title,x.form.lane,x.form.level,t.date,t.time,t.lane_spacing,t.lighting,t.pilot_view,t.time_limit_min,fmtElapsed(elapsedMs(x)),sc.align,sc.gap,sc.total,vd.verdict,x.fault||""].map(q).join(","));}
+  const blob=new Blob(["\ufeff"+out.join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nist-report-"+nowISO()+".csv";a.click();URL.revokeObjectURL(a.href);
+  toast("報表已匯出");
+}
+
 /* ═══════════ VIEW: FORMS MGMT ═══════════ */
 function vForms(){
   const F=effForms();const custom=customForms();
