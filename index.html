@@ -828,6 +828,46 @@ function finishSession(id){
   s.status="done";s.finishedAt=Date.now();s.savedAt=Date.now();saveSession(s);
   stopTick();toast("已提交；可檢視結果與匯出");location.hash="#/result/"+id;
 }
+/* ---------- M3 media: photos + signature ---------- */
+function mediaList(id){const s=getSession(id);return (s&&s.media)||[]}
+function addMedia(id,type,url){const s=getSession(id);if(!s)return;s.media=s.media||[];s.media.push({type,url,ts:Date.now()});s.savedAt=Date.now();saveSession(s)}
+function pickAndUploadPhoto(id,cb){
+  const inp=document.createElement("input");inp.type="file";inp.accept="image/*";
+  if(/Android/i.test(navigator.userAgent||""))inp.setAttribute("capture","environment");
+  inp.onchange=async()=>{
+    const f=inp.files&&inp.files[0];if(!f)return;
+    const c=await supabaseClient();const u=authUser();
+    if(!c||!u){toast("需登入並設定 Supabase 才能上傳照片");return}
+    const ext=((f.name.split(".").pop())||"jpg").split(" ")[0];
+    const path=id+"/"+Date.now()+"."+ext;
+    const {error}=await c.storage.from("media").upload(path,f,{cacheControl:"3600",upsert:false});
+    if(error){toast("上傳失敗："+error.message);return}
+    const {data:{publicUrl}}=c.storage.from("media").getPublicUrl(path);
+    addMedia(id,"photo",publicUrl);toast("照片已上傳");if(cb)cb();
+  };
+  inp.click();
+}
+function renderSigCanvas(id){
+  const cv=document.getElementById("sig-canvas");if(!cv||!cv.getContext)return;
+  const ctx=cv.getContext("2d");if(!ctx)return;
+  const sig=mediaList(id).find(x=>x.type==="signature");
+  if(sig){const img=new Image();img.onload=()=>{ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0,cv.width,cv.height)};img.src=sig.url;return}
+  ctx.fillStyle="#fff";ctx.fillRect(0,0,cv.width,cv.height);ctx.strokeStyle="#1b1e26";ctx.lineWidth=2;ctx.lineCap="round";
+  let drawing=false;
+  const pos=e=>{const r=cv.getBoundingClientRect();const t=(e.touches&&e.touches[0])||e;return{x:t.clientX-r.left,y:t.clientY-r.top}};
+  const down=e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);if(e.preventDefault)e.preventDefault()};
+  const move=e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();if(e.preventDefault)e.preventDefault()};
+  const up=()=>{drawing=false};
+  cv.addEventListener("pointerdown",down);cv.addEventListener("pointermove",move);cv.addEventListener("pointerup",up);cv.addEventListener("pointerleave",up);
+}
+function saveSignature(id){
+  const cv=document.getElementById("sig-canvas");if(!cv||!cv.toDataURL)return;
+  addMedia(id,"signature",cv.toDataURL("image/png"));toast("簽名已儲存");
+}
+function clearSignature(){
+  const cv=document.getElementById("sig-canvas");if(!cv||!cv.getContext)return;
+  cv.getContext("2d").clearRect(0,0,cv.width,cv.height);
+}
 /* ═══════════ VIEW: RESULT ═══════════ */
 function vResult(id){
   const s=getSession(id);if(!s){location.hash="#/home";return}
@@ -891,6 +931,10 @@ function vResult(id){
     </div>`;
   $("#rb-print").onclick=()=>printSheet(id);
   $("#rb-csv").onclick=()=>exportCSV(id);
+  $("#b-addphoto").onclick=()=>pickAndUploadPhoto(id,()=>vResult(id));
+  $("#b-sig-save").onclick=()=>{saveSignature(id);vResult(id)};
+  $("#b-sig-clear").onclick=()=>clearSignature();
+  renderSigCanvas(id);
   $("#rb-back").onclick=()=>location.hash="#/history";
   $("#rb-new").onclick=()=>location.hash="#/new/"+s.formId;
   // mirror sheet into printroot for clean printing
