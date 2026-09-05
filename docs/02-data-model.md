@@ -64,6 +64,13 @@ id, session_id, type（pdf/csv）, file_url, created_at
 - App「表單管理」內建雲端同步：填 Project URL + anon key → 啟用 → 上傳/下載場次（以 local_id 去重）
 - 未設定時完全離線、不影響既有使用
 
+## API 層（Edge Functions 已完成）
+
+- `supabase/functions/sessions`：場次 CRUD（GET 列表/單筆、POST 建立含 auth.uid()、PATCH 更新、DELETE）
+- `supabase/functions/report`：報表彙總（過濾＋count/avg/max）
+- `supabase/functions/media-upload`：照片上傳回傳 public URL
+- 皆以 Bearer user JWT 呼叫、受 RLS 保護；`config.toml` 設 verify_jwt。部署：`supabase functions deploy <name>`
+
 ## API 草案（REST）
 
 ```

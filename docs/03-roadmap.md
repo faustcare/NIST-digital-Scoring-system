@@ -26,7 +26,7 @@
 
 ## M3 ⬜ 待開發
 - [ ] 多考官權限（Admin/Proctor/Viewer）
-- [ ] API（見 02-data-model.md）
+- [x] API 層（Supabase Edge Functions：sessions CRUD / report 彙總 / media-upload） [2026-09-05 完成]
 - [ ] 照片/簽名數位化、QR 開場
 - [x] 打點 UX 進階（長按復原、對齊→缺口自動連動、震動回饋） [2026-09-05 完成]
 - [ ] 跨版本 NIST 表單控管

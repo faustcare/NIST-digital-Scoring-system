@@ -1,0 +1,22 @@
+# Supabase 專案設定（本地 CLI 與 Edge Functions 用）
+project_id = "nist-digital-scoring-system"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/*"]
+
+[functions]
+verify_jwt = true
