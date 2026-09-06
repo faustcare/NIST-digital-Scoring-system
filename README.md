@@ -41,5 +41,7 @@ app/forms.open-lane.json        # 表單庫配置（20 張表單）
 
 ## 線上部署
 
-- **GitHub Pages**：https://faustcare.github.io/nist-digital-scoring-system/（push `main` 即自動部署，由 `.github/workflows/deploy.yml` 驅動；也可在 Actions 手動觸發）
-- 部署方式：`app/` 為站點根（單檔 `index.html`＋表單庫），hash 路由不受子路徑影響
+- **GitHub Pages**：https://faustcare.github.io/NIST-digital-Scoring-system/（**已上線**；來源為 `gh-pages` 分支，內容＝`app/`）
+- 手動發布（無需特殊權限）：`git subtree push --prefix app origin gh-pages`
+- **GitHub Actions 自動化**：`.github/workflows/deploy.yml` 已備妥（push `main` 即自動建置發布）；目前推送用 token 無 `workflow` scope 尚無法納入 repo——取得含 `workflow` scope 的 PAT 後，於 repo 加入該檔（或於 GitHub 網頁手動建立相同內容）即自動生效，詳見交付的 `workflow-deploy-github-pages.yml`
+- 本專案 repo 已由 private 轉為 **public**（Pages 需要）；網頁為靜態單檔＋hash 路由（`#/new/...`），子路徑部署無需調整
