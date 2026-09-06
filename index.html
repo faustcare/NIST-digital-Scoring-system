@@ -651,8 +651,9 @@ function vNew(formId){
     <div class="flabel">考生姓名／編號 <span class="req">*</span></div>
     <input class="finput" id="f-candidate" placeholder="例：王小明 / A-012">
     <div class="frow2">
-      <div><div class="flabel">飛機廠牌</div><input class="finput" id="f-make" placeholder="DJI"></div>
-      <div><div class="flabel">型號</div><input class="finput" id="f-model" placeholder="Mavic 3E"></div>
+      <div><div class="flabel">飛機廠牌</div>
+        <select class="fselect" id="f-make"><option value="">-- 選擇廠牌 --</option><option>SKYDIO</option><option>新樂飛</option></select></div>
+      <div><div class="flabel">型號</div><input class="finput" id="f-model" readonly placeholder="選擇廠牌後自動帶出"></div>
     </div>
     <div class="flabel">配置（payload／zoom／介面）</div>
     <input class="finput" id="f-payload" placeholder="例：RTK + zoom">
@@ -693,6 +694,8 @@ function vNew(formId){
       <button class="btn primary" id="b-start">開始計時評分</button>
     </div>
     </div>`;
+  const AIRCRAFT_MODELS={SKYDIO:"X10","新樂飛":"T100"};
+  $("#f-make").addEventListener("change",e=>{$("#f-model").value=AIRCRAFT_MODELS[e.target.value]||""});
   $("#f-spacing").addEventListener("change",e=>{$("#customSpacing").classList.toggle("hidden",e.target.value!=="other")});
   $("#f-tlimit").addEventListener("change",e=>{$("#customLimit").classList.toggle("hidden",e.target.value!=="other")});
   $("#b-cancel").onclick=()=>location.hash="#/home";
