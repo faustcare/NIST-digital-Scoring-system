@@ -38,3 +38,8 @@ app/forms.open-lane.json        # 表單庫配置（20 張表單）
 | M3 | 多考官權限 ✅、API（Edge Functions）✅、照片/簽名數位化 ✅、本機測試環境＋E2E ✅、部署文件 | ✅ 完成（部署文件待驗證） |
 
 詳細規劃見 `docs/`。
+
+## 線上部署
+
+- **GitHub Pages**：https://faustcare.github.io/nist-digital-scoring-system/（push `main` 即自動部署，由 `.github/workflows/deploy.yml` 驅動；也可在 Actions 手動觸發）
+- 部署方式：`app/` 為站點根（單檔 `index.html`＋表單庫），hash 路由不受子路徑影響
