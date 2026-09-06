@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="NIST sUAS 現場考評數位評分表 — 選表單、填測驗條件、計時打點、自動計分與匯出（2020B5 Forms Book）">
 <title>NIST 數位評分表</title>
 <style>
 :root{
@@ -22,19 +23,26 @@ body{
   background:radial-gradient(1200px 600px at 50% -8%,#182036 0%,var(--bg) 55%) fixed, var(--bg);
   color:var(--ink); font-family:var(--sans); min-height:100%; -webkit-font-smoothing:antialiased;
 }
-#app{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-/* ---------- top bar ---------- */
+/* ============ 網站 Header（RWD 導覽） ============ */
 #topbar{
-  position:sticky;top:0;z-index:30;background:rgba(13,16,23,.92);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);padding:10px 14px 9px;
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:30;background:rgba(13,16,23,.9);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
 }
-#topbar .brand{display:flex;align-items:center;gap:9px;min-width:0}
-#topbar .ringlogo{width:26px;height:26px;flex:0 0 26px;border-radius:50%;border:2.5px solid var(--green);position:relative}
+.navwrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-width:0}
+#topbar .brand{display:flex;align-items:center;gap:9px;min-width:0;text-decoration:none;color:var(--ink)}
+#topbar .ringlogo{width:28px;height:28px;flex:0 0 28px;border-radius:50%;border:2.5px solid var(--green);position:relative}
 #topbar .ringlogo::before{content:"";position:absolute;inset:5px;border-radius:50%;border:1.5px solid var(--blue)}
-#topbar .ttl{font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#topbar .sub{font-size:10px;color:var(--faint);letter-spacing:.14em;text-transform:uppercase}
-#topbar .spacer{flex:1}
+#topbar .ttl{font-size:14px;font-weight:700;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+#topbar .sub{font-size:9.5px;color:var(--faint);letter-spacing:.14em;text-transform:uppercase;display:block}
+.sitenav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.sitenav a{
+  font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px;
+  border:1px solid transparent;transition:color .12s ease,background .12s ease,border-color .12s ease;
+}
+.sitenav a:hover{color:var(--ink);background:var(--panel)}
+.sitenav a:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.tbright{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 #timerBox{text-align:right;line-height:1.15}
 #timerBox .tbig{font-size:19px;font-weight:700;letter-spacing:.03em}
@@ -45,35 +53,62 @@ body{
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
 .dot.saved{background:var(--green);box-shadow:0 0 6px var(--green)}
 .dot.dirty{background:var(--amber);box-shadow:0 0 6px var(--amber)}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:2px 8px}
-.chip.hot{color:var(--amber);border-color:var(--amber);}
-.chip.ok{color:var(--green);border-color:var(--green-d);}
-/* ---------- main ---------- */
-main#view{flex:1;padding:16px 14px 150px}
-h1.viewttl{font-size:20px;font-weight:800;letter-spacing:.01em}
-.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}
-.lede{color:var(--muted);font-size:13px;line-height:1.6;margin-top:6px}
-/* hero stamp */
-.bucketstamp{display:flex;flex-direction:column;align-items:center;margin:18px auto 6px;gap:10px}
-.stampwrap{position:relative;width:110px;height:110px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:2px 9px;white-space:nowrap}
+.chip.hot{color:var(--amber);border-color:var(--amber)}
+.chip.ok{color:var(--green);border-color:var(--green-d)}
+/* ============ 主內容容器（網站寬度） ============ */
+main#view{max-width:1120px;margin:0 auto;padding:30px 20px 160px}
+#app{min-height:100vh;display:flex;flex-direction:column}
+h1.viewttl{font-size:26px;font-weight:800;letter-spacing:.01em;line-height:1.25}
+@media(max-width:640px){h1.viewttl{font-size:21px}}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.lede{color:var(--muted);font-size:13.5px;line-height:1.7;margin-top:8px;max-width:640px}
+/* ============ Hero ============ */
+.hero{display:flex;align-items:center;gap:22px;margin-bottom:6px;flex-wrap:wrap}
+.hero .hero-copy{flex:1;min-width:240px}
+.hero .bucketstamp{display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;margin:0}
+.stampwrap{position:relative;width:112px;height:112px}
 .stampring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--green)}
 .stampring::before{content:"";position:absolute;inset:14px;border-radius:50%;border:2px dashed var(--blue);opacity:.9}
-.stampcore{position:absolute;inset:30px;border-radius:50%;border:2.5px solid var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:17px;color:var(--amber)}
-.stamplbl{font-family:var(--mono);font-size:11px;letter-spacing:.34em;color:var(--faint)}
-.stattrio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:center}
-.stat b{display:block;font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:.02em}
-.stat span{font-size:10px;color:var(--muted);letter-spacing:.06em}
-/* cards & buttons */
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
-.card + .card{margin-top:10px}
-.card h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
-.card h3 .lanechip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
-.card .meta{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.55}
+.stampcore{position:absolute;inset:30px;border-radius:50%;border:2.5px solid var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;color:var(--amber)}
+.stamplbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.3em;color:var(--faint)}
+.hero-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+@media(max-width:520px){.hero .bucketstamp{display:none}}
+.stattrio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 8px}
+@media(max-width:480px){.stattrio{grid-template-columns:repeat(2,1fr)}.stattrio .stat:last-child{grid-column:1/-1}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center}
+.stat b{display:block;font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:.02em}
+.stat span{font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+/* ============ 表單庫（卡片網格） ============ */
+.sechead{margin:30px 0 10px;font-size:14px;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.sechead::after{content:"";flex:1;height:1px;background:var(--line)}
+.sechead small{font-weight:500;color:var(--muted);font-size:10.5px;letter-spacing:0}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+@media(max-width:560px){.formgrid{grid-template-columns:1fr}}
+.formcard{
+  display:flex;flex-direction:column;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  padding:14px 15px;text-decoration:none;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:border-color .12s ease,transform .06s ease,background .12s ease;
+}
+.formcard:hover{border-color:var(--green-d);background:var(--panel2)}
+.formcard:active{transform:scale(.985)}
+.formcard:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.formcard .fc-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.lanechip{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;padding:2px 8px;border-radius:5px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.formcard .fname{font-size:15px;font-weight:700}
+.formcard .fdesc{font-size:11.5px;color:var(--muted);line-height:1.55;flex:1}
+.fold{font-family:var(--mono);letter-spacing:.08em;background:var(--bg2);border:1px solid var(--line);color:var(--muted);padding:2px 8px;border-radius:5px;font-size:10px;white-space:nowrap}
+.formcard .fc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:2px}
+.formcard .fcta{font-size:12px;font-weight:700;color:var(--green)}
+/* ============ 通用元件 ============ */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px}
+.card h3{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 .lanechip{font-family:var(--mono);font-size:9.5px}
+.card .meta{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6}
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
   background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:10px;
-  font-family:var(--sans);font-size:14px;font-weight:600;padding:13px 16px;cursor:pointer;
+  font-family:var(--sans);font-size:14px;font-weight:600;padding:12px 16px;cursor:pointer;
   -webkit-tap-highlight-color:transparent;transition:transform .06s ease,background .12s ease;text-decoration:none;user-select:none;
 }
 .btn:active{transform:scale(.97)}
@@ -85,20 +120,11 @@ h1.viewttl{font-size:20px;font-weight:800;letter-spacing:.01em}
 .btn.small{padding:8px 12px;font-size:12px;border-radius:8px}
 .btn.redline{background:transparent;border-color:var(--red);color:var(--red)}
 .btn.amberline{background:transparent;border-color:var(--amber);color:var(--amber)}
-.btnrow{display:flex;gap:8px;margin-top:12px}
+.btnrow{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
 .btnrow .btn{flex:1}
-.formlib{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.formrow{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.formrow:hover{border-color:var(--green-d)}
-.formrow .fname{font-size:14px;font-weight:600}
-.formrow .fdesc{font-size:11px;color:var(--muted);margin-top:2px}
-.formrow .fold{font-size:9px}
-.fold{font-family:var(--mono);letter-spacing:.08em;background:var(--bg2);border:1px solid var(--line);color:var(--muted);padding:2px 7px;border-radius:5px;font-size:10px;white-space:nowrap}
-.sechead{margin:22px 0 8px;font-size:13px;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
-.sechead::after{content:"";flex:1;height:1px;background:var(--line)}
-.sechead small{font-weight:500;color:var(--muted);font-size:10px;letter-spacing:0}
-/* forms (trial info) */
-.flabel{display:block;font-size:11px;color:var(--muted);letter-spacing:.05em;margin:12px 0 5px}
+.btnrow .btn.auto{flex:0 0 auto}
+/* ============ 表單（Trial Info） ============ */
+.flabel{display:block;font-size:11px;color:var(--muted);letter-spacing:.05em;margin:13px 0 5px}
 .flabel .req{color:var(--amber)}
 .finput,.fselect,.ftextarea{
   width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:9px;color:var(--ink);
@@ -109,28 +135,27 @@ h1.viewttl{font-size:20px;font-weight:800;letter-spacing:.01em}
 .frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .finput{font-family:var(--mono);font-size:14px;letter-spacing:.02em}
 .finput[type=date],.finput[type=time]{color-scheme:dark}
-input[type=color]{width:44px;height:40px;padding:2px;border-radius:8px}
 textarea.ftextarea{resize:vertical;min-height:64px;font-family:var(--sans)}
-.cond{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin-bottom:8px}
-.cond .ct{font-size:11px;color:var(--muted);letter-spacing:.06em}
-.cond .cv{font-size:14px;font-weight:600;margin-top:3px;font-family:var(--mono)}
-/* ---------- scoring ---------- */
-.scrwrap{display:flex;flex-direction:column;gap:14px}
-.scritem{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
-.scritem .st{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.scritem .st .nm{font-size:13px;font-weight:700}
+.jsonwrap{background:#0a0d13;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:#b7c0d4;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+/* ============ 評分（RWD 雙欄） ============ */
+.scrwrap{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
+@media(min-width:1040px){.scrwrap{grid-template-columns:1fr 1fr}.scrwrap .scrtot{grid-column:1/-1}}
+.scritem{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px}
+.scritem .st{display:flex;align-items:center;gap:8px;margin-bottom:11px;flex-wrap:wrap}
+.scritem .st .nm{font-size:13.5px;font-weight:700}
 .scritem .st .pn{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.04em;margin-left:auto}
-.legend{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
+.legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
 .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
 .lcell{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line);display:inline-block;position:relative}
 .lcell.g{background:var(--green)}.lcell.h{background:linear-gradient(to bottom,var(--amber) 50%,transparent 50%);border-color:var(--amber)}.lcell.x{background:transparent;border-color:var(--red)}.lcell.x::before{content:"✕";position:absolute;left:-1px;top:-4px;color:var(--red);font-size:11px}.lcell.b{background:var(--blue)}
-/* bucket grid */
-.bgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.bgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+@media(min-width:720px){.bgrid{gap:10px}}
+@media(min-width:1100px){.bgrid{gap:10px}}
 .bgrid .rowlab{grid-column:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .cell{
   position:relative;aspect-ratio:1;border-radius:50%;border:2px dashed var(--line);background:transparent;color:var(--muted);
   display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:600;
-  -webkit-tap-highlight-color:transparent;transition:transform .05s ease;user-select:none;
+  -webkit-tap-highlight-color:transparent;transition:transform .05s ease;user-select:none;min-width:34px;
 }
 .cell:active{transform:scale(.92)}
 .cell.lp{transform:scale(.82);border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
@@ -149,34 +174,39 @@ textarea.ftextarea{resize:vertical;min-height:64px;font-family:var(--sans)}
 .cell.no{border:2.5px solid var(--red);background:var(--red-soft);color:var(--red)}
 .cell.no::after{content:"✕";position:absolute;font-size:15px;font-weight:800;color:var(--red)}
 .cell .code{position:relative;z-index:1;font-size:11px}
-.scrtot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px}
-.scrtot .t{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center}
-.scrtot .t b{display:block;font-family:var(--mono);font-size:15px}
-.scrtot .t span{font-size:9px;color:var(--muted);letter-spacing:.05em}
+.scrtot{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:0}
+@media(max-width:420px){.scrtot{grid-template-columns:repeat(3,1fr)}}
+.scrtot .t{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px;text-align:center}
+.scrtot .t b{display:block;font-family:var(--mono);font-size:16px}
+.scrtot .t span{font-size:9.5px;color:var(--muted);letter-spacing:.05em}
 .scrtot .t.hl{border-color:var(--green-d);background:var(--green-soft)}
 .scrtot .t.hl b{color:var(--green)}
-/* ---------- bottom bar ---------- */
+/* ============ 浮動動作列（RWD dock） ============ */
 #bottombar{
-  position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(13,16,23,.94);backdrop-filter:blur(8px);
-  border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:40;
+  width:min(720px,calc(100vw - 20px));
+  background:rgba(19,24,38,.94);backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(0,0,0,.5);
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
 }
-#bottombar .inner{max-width:640px;margin:0 auto;display:flex;gap:8px}
+#bottombar .inner{display:flex;gap:9px}
 #bottombar .inner .btn{flex:1}
+@media(max-width:480px){#bottombar{border-radius:14px}}
 .toast{
-  position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);
-  color:var(--ink);font-size:12px;padding:8px 14px;border-radius:99px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.4);
-  opacity:0;pointer-events:none;transition:opacity .18s ease;font-family:var(--mono);
+  position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);
+  color:var(--ink);font-size:12px;padding:8px 16px;border-radius:99px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  opacity:0;pointer-events:none;transition:opacity .18s ease;font-family:var(--mono);white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;
 }
 .toast.show{opacity:1}
-/* ---------- result / paper sheet ---------- */
-.sheet{background:var(--paper);color:var(--paper-ink);border-radius:14px;padding:18px 16px;box-shadow:0 14px 40px rgba(0,0,0,.4);overflow:hidden}
+/* ============ 結果紙本 ============ */
+.sheet{background:var(--paper);color:var(--paper-ink);border-radius:14px;padding:20px 18px;box-shadow:0 14px 40px rgba(0,0,0,.4);overflow:hidden;max-width:820px;margin:0 auto}
 .sheet .shead{border-bottom:2px solid var(--paper-ink);padding-bottom:10px;margin-bottom:12px}
-.sheet .shead .t{font-size:17px;font-weight:800;letter-spacing:.02em}
+.sheet .shead .t{font-size:18px;font-weight:800;letter-spacing:.02em}
 .sheet .shead .s{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-mut);margin-top:3px}
 .sheet h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-mut);margin:16px 0 8px;border-bottom:1px solid rgba(27,30,38,.18);padding-bottom:4px}
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12px}
 .kv .k{color:var(--paper-mut)}
-.kv .v{font-weight:600;font-family:var(--mono);font-size:12px;text-align:right}
+.kv .v{font-weight:600;font-family:var(--mono);font-size:12px;text-align:right;word-break:break-all}
 .kv .v.s{text-align:left;font-family:var(--sans)}
 .bigtot{display:flex;gap:8px;margin-top:6px}
 .bigtot>div{flex:1;border:1.5px solid var(--paper-ink);border-radius:10px;padding:10px;text-align:center}
@@ -194,41 +224,43 @@ textarea.ftextarea{resize:vertical;min-height:64px;font-family:var(--sans)}
 .sigs .sg{border-top:1px dashed var(--paper-ink);padding-top:6px;font-size:11px;color:var(--paper-mut);text-align:center}
 .reslink{display:flex;gap:8px;margin-top:12px}
 .reslink .btn{flex:1}
-.statline{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-/* ---------- history ---------- */
-.histrow{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:8px}
+.statline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+/* ============ 歷史報表 ============ */
+.histgrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+@media(min-width:900px){.histgrid{grid-template-columns:1fr 1fr;align-items:start}}
+.histrow{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
 .histrow .hmain{flex:1;min-width:0;cursor:pointer}
 .histrow .hname{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .histrow .hmeta{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
-.histrow .hdel{background:transparent;border:1px solid var(--line);color:var(--faint);border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer}
+.histrow .hdel{background:transparent;border:1px solid var(--line);color:var(--faint);border-radius:8px;width:32px;height:32px;font-size:14px;cursor:pointer;flex:0 0 auto}
 .histrow .hdel:hover{color:var(--red);border-color:var(--red)}
+.histrow .hmain .hscore{font-size:12px;font-weight:700;color:var(--green);font-family:var(--mono);margin-top:2px}
 .empty{text-align:center;color:var(--faint);padding:44px 12px;font-size:13px;line-height:1.8}
 .empty .big{font-size:34px;margin-bottom:6px}
-/* history filters & report */
-.filters{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.filters{display:flex;flex-direction:column;gap:9px;margin:14px 0}
 .frow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .frow .finput{flex:1;min-width:110px}
 .frow .fselect{flex:1;min-width:110px}
 .fbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer}
 .fbtn.on{background:var(--green);border-color:var(--green);color:#06110c;font-weight:700}
 .fbtn:active{transform:scale(.97)}
-.repstat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
-.repstat .rs{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
-.repstat .rs b{display:block;font-family:var(--mono);font-size:18px}
+.repstat{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0}
+.repstat .rs{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px;text-align:center}
+.repstat .rs b{display:block;font-family:var(--mono);font-size:19px}
 .repstat .rs span{font-size:10px;color:var(--muted)}
-.warnbox{border:1px solid var(--amber);background:var(--amber-soft);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:12px;line-height:1.6}
+.warnbox{border:1px solid var(--amber);background:var(--amber-soft);border-radius:11px;padding:11px 13px;margin:12px 0;font-size:12px;line-height:1.6}
 .warnbox b{color:var(--amber)}
-.warnbox .wrow{display:flex;align-items:center;gap:6px;margin-top:4px}
+.warnbox .wrow{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
 .warnbox .wrow .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block}
 .warnbox .wrow .wbtn{margin-left:auto;background:transparent;border:1px solid var(--amber);color:var(--amber);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer}
-.histrow .hmain .hscore{font-size:12px;font-weight:700;color:var(--green);font-family:var(--mono)}
-
-.jsonwrap{background:#0a0d13;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:#b7c0d4;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-all}
-.formcount{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.formcount .fc{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center;font-size:10px;color:var(--muted)}
-.formcount .fc b{display:block;font-size:16px;color:var(--ink);font-family:var(--mono)}
+.formcount{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+@media(max-width:520px){.formcount{grid-template-columns:repeat(2,1fr)}}
+.formcount .fc{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:9px;text-align:center;font-size:10px;color:var(--muted)}
+.formcount .fc b{display:block;font-size:17px;color:var(--ink);font-family:var(--mono)}
+.mgmtgrid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;align-items:start}
+@media(min-width:960px){.mgmtgrid{grid-template-columns:1.15fr .85fr}}
 .hidden{display:none!important}
-/* print */
+/* ============ 列印 ============ */
 @media print{
   body{background:#fff}
   #topbar,#bottombar,.no-print,nav,noscript{display:none!important}
@@ -239,6 +271,7 @@ textarea.ftextarea{resize:vertical;min-height:64px;font-family:var(--sans)}
   .kv{grid-template-columns:1fr 1fr}
 }
 #printroot{display:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -249,12 +282,13 @@ textarea.ftextarea{resize:vertical;min-height:64px;font-family:var(--sans)}
 <div id="bottombar" class="hidden"><div class="inner" id="bbinner"></div></div>
 <div class="toast" id="toast"></div>
 <div id="printroot"></div>
-<noscript><div style="max-width:640px;margin:40px auto;padding:20px;color:#e9ecf3">此評分工具需要啟用 JavaScript 才能運作。</div></noscript>
+<noscript><div style="max-width:640px;margin:40px auto;padding:20px;color:#e9ecf3">此評分網站需要啟用 JavaScript 才能運作。</div></noscript>
 <script>
 "use strict";
 /* ════════════════════════════════════════════════════════════════
-   NIST 數位評分表 — M1 原型
-   表單引擎（資料驅動）＋ 場次評分 ＋ 計時 ＋ 匯出
+   NIST 數位評分表 — 網站版（RWD）
+   表單引擎（資料驅動）＋ 場次評分 ＋ 計時 ＋ 匯出 ＋ 雲端同步
+   行動／平板／桌機自適應；功能與資料模型沿用 M1–M3
    ════════════════════════════════════════════════════════════════ */
 const DEFAULT_FORMS = {
   meta:{
@@ -509,7 +543,16 @@ function route(){
 }
 window.addEventListener("hashchange",route);
 function bottom(html){const b=$("#bottombar");if(html){b.innerHTML='<div class="inner" id="bbinner">'+html+"</div>";b.classList.remove("hidden")}else{b.classList.add("hidden");b.innerHTML=''}}
-function topbar(html){$("#topbar").innerHTML='<div class="brand"><div class="ringlogo"></div><div><div class="ttl">'+(html.ttl||"NIST 數位評分")+'</div><div class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</div></div></div>'+(html.right||'')}
+function topbar(html){
+  $("#topbar").innerHTML=
+    '<div class="navwrap">'+
+    '<a class="brand" href="#/home"><span class="ringlogo"></span><span><span class="ttl">'+(html.ttl||"NIST 數位評分")+'</span><span class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</span></span></a>'+
+    '<nav class="sitenav"><a href="#/home">評分</a><a href="#/history">歷史報表</a><a href="#/forms">表單／雲端</a></nav>'+
+    '</div>'+
+    '<div class="tbright" id="tbright">'+(html.right||'')+'</div>';
+  if(!html.right){insertAuthChip()}
+}
+function insertAuthChip(){const slot=document.querySelector("#tbright");if(slot&&!slot.querySelector("#tb-auth")){slot.insertAdjacentHTML("beforeend",authChipHtml())}renderAuthChip()}
 /* ═══════════ VIEW: AUTH ═══════════ */
 function vAuth(){
   topbar({ttl:"帳號登入",sub:"SUPABASE AUTH · 多人共用"});
@@ -532,7 +575,7 @@ function vAuth(){
     <div class="eyebrow">SUPABASE AUTH</div>
     <h1 class="viewttl">登入／註冊</h1>
     <p class="lede">多人共用：登入後同步的場次歸屬你的帳號（RLS 保護，proctor 只看自己的、admin 看全部）。需先在 Supabase 執行 supabase/schema.sql（含 Auth trigger）。</p>
-    <div class="card" style="margin-top:14px">
+    <div class="card" style="margin-top:14px;max-width:520px">
       <div class="flabel">Email</div>
       <input class="finput" id="a-email" type="email" placeholder="you@example.com">
       <div class="flabel">密碼</div>
@@ -558,7 +601,7 @@ function vAuth(){
     st("註冊中…",true);const r=await sbSignUp(email,pw,name);st(r.msg,r.ok);
   };
 }
-/* ═══════════ VIEW: HOME ═══════════ */
+/* ═══════════ VIEW: HOME（網站首頁） ═══════════ */
 function vHome(){
   const F=effForms();const pt=F.points;
   topbar({ttl:"NIST 數位評分",sub:"現場評分 · 自動計時 · 自動計分"});
@@ -566,33 +609,37 @@ function vHome(){
   const cards=groups.map(lane=>{
     const fs=F.forms.filter(f=>f.lane===lane);
     return `<div class="sechead">${LANES[lane]} <small>${fs.length} 張表單</small></div>`+
-      fs.map(f=>`<div class="formrow" data-goto="#/new/${f.id}" tabindex="0" role="button" aria-label="建立場次：${esc(f.title)}">
-        <div style="flex:1"><div class="fname">${esc(f.title)}</div><div class="fdesc">${esc(f.desc||"")}</div></div>
-        <span class="fold">L${esc(f.level)}</span><span class="fold">${f.time_limit_minutes}min</span>
-      </div>`).join("");
+      `<div class="formgrid">`+
+      fs.map(f=>`<a class="formcard" href="#/new/${f.id}" tabindex="0" role="button" aria-label="建立場次：${esc(f.title)}">
+        <div class="fc-top"><span class="lanechip">${esc(f.id)}</span><span class="fold">L${esc(f.level)} · ${f.time_limit_minutes}min</span></div>
+        <span class="fname">${esc(f.title)}</span>
+        <span class="fdesc">${esc(f.desc||"")}</span>
+        <span class="fc-foot"><span class="fold">${esc(LANES[f.lane])}</span><span class="fcta">開始評分 →</span></span>
+      </a>`).join("")+`</div>`;
   }).join("");
   $("#view").innerHTML=`
-    <div class="eyebrow">NIST sUAS · DIGITAL SCORESHEET</div>
-    <h1 class="viewttl">NIST 數位評分表</h1>
-    <p class="lede">現場評分工具：選表單 → 填測驗條件 → 開始計時 → 圈選／劃掉打點 → 自動計分與匯出。所有資料儲存在本機瀏覽器，離線可用。</p>
-    <div class="bucketstamp">
-      <div class="stampwrap"><div class="stampring"></div><div class="stampcore">20</div></div>
-      <div class="stamplbl">A B C D · 1 2 3 4 5</div>
-    </div>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">NIST sUAS · DIGITAL SCORESHEET</div>
+        <h1 class="viewttl">NIST 數位評分表</h1>
+        <p class="lede">現場評分網站：選表單 → 填測驗條件 → 開始計時 → 圈選／劃掉打點 → 自動計分與匯出。離線可用，雲端同步多人共用。</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-goto="#/demo">示範評分</button>
+          <button class="btn" data-goto="#/history">歷次場次</button>
+        </div>
+      </div>
+      <div class="bucketstamp">
+        <div class="stampwrap"><div class="stampring"></div><div class="stampcore">20</div></div>
+        <div class="stamplbl">A B C D · 1 2 3 4 5</div>
+      </div>
+    </section>
     <div class="stattrio">
       <div class="stat"><b>${F.forms.length}</b><span>內建表單</span></div>
       <div class="stat"><b>${F.bucket_spec.count||20}</b><span>targets / 表單</span></div>
       <div class="stat"><b>${(F.bucket_spec.count||20)*(pt.align_pass+pt.gap_correct)}</b><span>滿分（對齊+缺口）</span></div>
     </div>
-    <div class="btnrow" style="margin-top:16px">
-      <button class="btn primary" data-goto="#/demo">示範評分</button>
-      <button class="btn" data-goto="#/history">歷次場次</button>
-    </div>
-    <div class="sechead">表單庫 <small>點選建立場次</small></div>
     ${cards}
-    <div class="btnrow">
-      <button class="btn ghost block" data-goto="#/forms">表單管理（JSON 匯入／匯出）</button>
-    </div>`;
+    <div class="btnrow" style="margin-top:18px"><button class="btn ghost block" data-goto="#/forms">表單管理（JSON 匯入／匯出）</button></div>`;
 }
 /* ═══════════ VIEW: TRIAL INFO (new) ═══════════ */
 function vNew(formId){
@@ -602,11 +649,9 @@ function vNew(formId){
     <div class="eyebrow">${esc(LANES[f.lane])} · LEVEL ${esc(f.level)}</div>
     <h1 class="viewttl">測驗條件</h1>
     <p class="lede">依 NIST 表單書 Form Fill-In Guidance 填寫。同類條件（間距／照明／風況／時限）下之分數才能互相比較。</p>
-    <div class="card" style="margin-top:14px">
-      <h3><span class="lanechip">${esc(f.id)}</span>${esc(f.title)}</h3>
-      <div class="meta">${esc(f.desc||"")} · 預設時限 ${f.time_limit_minutes} 分鐘</div>
-    </div>
-    <data-fields>
+    <div class="card" style="margin-top:14px"><h3><span class="lanechip">${esc(f.id)}</span>${esc(f.title)}</h3>
+      <div class="meta">${esc(f.desc||"")} · 預設時限 ${f.time_limit_minutes} 分鐘</div></div>
+    <div class="card" style="margin-top:12px;max-width:720px">
     <div class="flabel">考生姓名／編號 <span class="req">*</span></div>
     <input class="finput" id="f-candidate" placeholder="例：王小明 / A-012">
     <div class="frow2">
@@ -645,12 +690,12 @@ function vNew(formId){
       <div><div class="flabel">評分方式</div>
         <select class="fselect" id="f-src"><option>Pilot</option><option>Images</option></select></div>
     </div>
-    </data-fields>
     <div id="customSpacing" class="hidden" style="margin-top:8px"><div class="flabel">自訂間距（m）</div><input class="finput" id="f-spacing-other" inputmode="decimal" placeholder="例：12.5"></div>
     <div id="customLimit" class="hidden" style="margin-top:8px"><div class="flabel">自訂時限（分鐘）</div><input class="finput" id="f-tlimit-other" inputmode="decimal" placeholder="例：15"></div>
     <div class="btnrow" style="margin-top:18px">
       <button class="btn ghost" id="b-cancel">取消</button>
       <button class="btn primary" id="b-start">開始計時評分</button>
+    </div>
     </div>`;
   $("#f-spacing").addEventListener("change",e=>{$("#customSpacing").classList.toggle("hidden",e.target.value!=="other")});
   $("#f-tlimit").addEventListener("change",e=>{$("#customLimit").classList.toggle("hidden",e.target.value!=="other")});
@@ -695,7 +740,7 @@ function vScore(id){
         <div class="bgrid" id="g-gap"></div>
         <div class="legend"><span><i class="lcell b"></i>缺口方向正確 +${pt.gap_correct}</span><span><i class="lcell x"></i>錯誤 0</span></div>
       </div>
-      <div class="scritem">
+      <div class="scritem" style="grid-column:1/-1">
         <div class="st"><span class="nm">結束原因</span></div>
         <select class="fselect" id="f-fault">
           <option value="">正常完成</option><option value="安全疑慮中止">安全疑慮中止</option><option value="超過時限">超過時限</option><option value="技術故障">技術故障</option><option value="其他">其他</option>
@@ -705,7 +750,6 @@ function vScore(id){
       </div>
     </div>`;
   $("#f-fault").value=s.fault||"";$("#f-notes").value=s.notes||"";
-  // render grids
   const gridAlign=$("#g-align"),gridGap=$("#g-gap");
   const rowKey=it=>it.row!==undefined?it.row:(it.code||"·").charAt(0);
   const rowSet=[...new Set(items.map(rowKey))];
@@ -737,10 +781,9 @@ function vScore(id){
   $("#bb-done").onclick=()=>{finishSession(id)};
   $("#f-fault").onchange=()=>{s=getSession(id);s.fault=$("#f-fault").value;s.notes=$("#f-notes").value;s.savedAt=Date.now();saveSession(s)};
   $("#f-notes").oninput=()=>{s=getSession(id);s.notes=$("#f-notes").value;s.savedAt=Date.now();saveSession(s)};
-  // timer tick
   stopTick();
   tickHandle=setInterval(()=>{const cur=getSession(id);if(!cur)return;renderTimer(cur)},500);
-  renderTimer(s);renderTotal(s);
+  topbarRight(s);renderTimer(s);renderTotal(s);
 }
 function cycleCode(id,code,states){
   let s=getSession(id);if(!s||s.status==="done")return;
@@ -808,7 +851,6 @@ function renderTimer(s){
     ${ms>0&&ms>=lim?`<span class="chip hot">已逾時</span>`:""}
     </div><div class="tbig mono">${fmtClock(ms)}</div><div class="tlbl">ELAPSED / ${s.trial.time_limit_min}MIN</div>`;
   if(ms>0&&ms>=lim)el.style.color="var(--amber)";else el.style.color="";
-  // pause/resume button in topbar
   const pb=$("#tb-toggle");if(pb){pb.textContent=s.timer.running?"⏸ 暫停":"▶ 繼續";}
 }
 function renderTotal(s){
@@ -817,18 +859,16 @@ function renderTotal(s){
   if(a)a.textContent=sc.align+"/"+sc.alignMax;
   if(g)g.textContent=sc.gap+"/"+sc.gapMax;
   if(t)t.textContent=sc.total+"/"+sc.totalMax;
-  topbarRight(s);
+  const pb=$("#tb-toggle");if(pb)pb.textContent=s.timer.running?"⏸ 暫停":"▶ 繼續";
+  const sb=$("#tb-score");if(sb)sb.textContent=sc.total+"分";
 }
 function topbarRight(s){
-  const right=`<div style="display:flex;gap:12px;align-items:center">
-    <button class="btn small ghost" id="tb-toggle">${s.timer.running?"⏸":"▶"}</button>
+  const slot=document.querySelector("#tbright");
+  if(!slot)return;
+  const right=`<button class="btn small ghost" id="tb-toggle">${s.timer.running?"⏸ 暫停":"▶ 繼續"}</button>
     <div id="scoreBox"><div class="sbig mono" id="tb-score">${scoreOf(s).total}分</div><div class="slbl">SCORE</div></div>
-    <div id="timerBox"></div>
-  </div>`;
-  const tb=$("#topbar");const existing=tb.querySelector("#tb-toggle");
-  if(!existing){tb.insertAdjacentHTML("beforeend",right);document.getElementById("tb-toggle").onclick=()=>toggleTimer(s.id)}
-  else{const sb=document.getElementById("tb-score");if(sb)sb.textContent=scoreOf(s).total+"分"}
-  renderAuthChip();
+    <div id="timerBox"></div>`;
+  if(!slot.querySelector("#tb-toggle")){slot.innerHTML="";slot.insertAdjacentHTML("beforeend",right+authChipHtml());renderAuthChip();document.getElementById("tb-toggle").onclick=()=>toggleTimer(s.id)}
   renderTimer(s);
 }
 function toggleTimer(id){
@@ -961,7 +1001,6 @@ function vResult(id){
   renderSigCanvas(id);
   $("#rb-back").onclick=()=>location.hash="#/history";
   $("#rb-new").onclick=()=>location.hash="#/new/"+s.formId;
-  // mirror sheet into printroot for clean printing
   $("#printroot").innerHTML=printSheetHTML(id);
   stopTick();
 }
@@ -1092,7 +1131,7 @@ function vHistory(){
       <div class="rs"><b>${max}</b><span>最高分</span></div>
     </div>
     ${warnHtml}
-    ${filtered.length?rows:'<div class="empty"><div class="big">◎</div>沒有符合條件的場次。</div>'}
+    ${filtered.length?'<div class="histgrid">'+rows+'</div>':'<div class="empty"><div class="big">◎</div>沒有符合條件的場次。</div>'}
     <div class="btnrow" style="margin-top:14px">
       <button class="btn ghost block" id="f-export">匯出報表 CSV</button>
     </div>`;
@@ -1120,7 +1159,6 @@ function exportReport(rows){
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nist-report-"+nowISO()+".csv";a.click();URL.revokeObjectURL(a.href);
   toast("報表已匯出");
 }
-
 /* ═══════════ VIEW: FORMS MGMT ═══════════ */
 function vForms(){
   const F=effForms();const custom=customForms();
@@ -1131,38 +1169,44 @@ function vForms(){
     <h1 class="viewttl">表單管理</h1>
     <p class="lede">表單由 JSON 定義。修改後「套用表單」即生效；可用「表單管理」載入新版 NIST 規則而不改程式。</p>
     <div class="formcount">${counts}<div class="fc"><b>${F.bucket_spec.count||20}</b>targets / 表單</div></div>
-    <div class="card" style="margin-top:14px">
-      <h3>自訂表單 JSON ${custom?'<span class="chip ok">已套用自訂</span>':''}</h3>
-      <div class="meta">結構：{ meta, bucket_spec:{rows,stands}, points:{align_pass,align_partial,align_miss,gap_correct,gap_wrong}, forms:[{id,lane,level,name,title,time_limit_minutes,desc}] }</div>
-      <textarea class="ftextarea jsonbody" id="jsonbox" style="font-family:var(--mono);font-size:11px;line-height:1.45">${esc(JSON.stringify(custom||DEFAULT_FORMS,null,2))}</textarea>
-      <div class="btnrow">
-        <button class="btn primary" id="b-apply">套用表單</button>
-        <button class="btn ghost" id="b-reset">回復預設</button>
-        <button class="btn ghost" id="b-dl">下載 JSON</button>
+    <div class="mgmtgrid">
+      <div>
+        <div class="card">
+          <h3>自訂表單 JSON ${custom?'<span class="chip ok">已套用自訂</span>':''}</h3>
+          <div class="meta">結構：{ meta, bucket_spec:{rows,stands}, points:{align_pass,align_partial,align_miss,gap_correct,gap_wrong}, forms:[{id,lane,level,name,title,time_limit_minutes,desc}] }</div>
+          <textarea class="ftextarea jsonbody" id="jsonbox" style="font-family:var(--mono);font-size:11px;line-height:1.45;min-height:220px">${esc(JSON.stringify(custom||DEFAULT_FORMS,null,2))}</textarea>
+          <div class="btnrow">
+            <button class="btn primary" id="b-apply">套用表單</button>
+            <button class="btn ghost" id="b-reset">回復預設</button>
+            <button class="btn ghost" id="b-dl">下載 JSON</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="card">
-      <h3>載入既有 JSON 檔案</h3>
-      <div class="meta">也可從檔案載入（如已下載的 forms JSON）。</div>
-      <input type="file" id="filej" accept=".json,application/json" style="margin-top:10px;font-size:12px">
-    </div>
-    <div class="card" id="cloudcard">
-      <h3>雲端同步（Supabase）${supabaseCfg()&&supabaseCfg().enabled?'<span class="chip ok">已啟用</span>':'<span class="chip">未啟用</span>'}</h3>
-      <div class="meta">填入 Supabase 專案 URL 與 anon key 後啟用。啟用後「立即同步」會上傳本地場次並下載遠端場次（以 local_id 去重）。未啟用時完全離線、不影響使用。需先在 Supabase 執行 supabase/schema.sql。</div>
-      <div class="flabel">Project URL</div>
-      <input class="finput" id="sb-url" placeholder="https://xxxxxx.supabase.co" value="${esc((supabaseCfg()||{}).url||'')}">
-      <div class="flabel">anon public key</div>
-      <input class="finput" id="sb-key" placeholder="eyJhbGciOi…" value="${esc((supabaseCfg()||{}).anonKey||'')}">
-      <div class="flabel">Edge Functions URL（正式架構）</div>
-      <input class="finput" id="sb-fnurl" placeholder="https://xxxx.supabase.co/functions/v1" value="${esc((supabaseCfg()||{}).functionsUrl||'')}">
-      <div class="meta" style="margin-top:2px">正式架構：填入 Functions URL 後，「立即同步」改走 Edge Functions（sessions/report/media-upload）而不再直連 DB。</div>
-      <div class="btnrow">
-        <button class="btn primary" id="b-sb-enable">啟用／儲存</button>
-        <button class="btn ghost" id="b-sb-test">測試連線</button>
-        <button class="btn ghost" id="b-sb-sync">立即同步</button>
-        <button class="btn ghost" id="b-sb-disable">停用</button>
+      <div>
+        <div class="card">
+          <h3>載入既有 JSON 檔案</h3>
+          <div class="meta">也可從檔案載入（如已下載的 forms JSON）。</div>
+          <input type="file" id="filej" accept=".json,application/json" style="margin-top:10px;font-size:12px">
+        </div>
+        <div class="card" id="cloudcard" style="margin-top:14px">
+          <h3>雲端同步（Supabase）${supabaseCfg()&&supabaseCfg().enabled?'<span class="chip ok">已啟用</span>':'<span class="chip">未啟用</span>'}</h3>
+          <div class="meta">填入 Supabase 專案 URL 與 anon key 後啟用。啟用後「立即同步」會上傳本地場次並下載遠端場次（以 local_id 去重）。未啟用時完全離線、不影響使用。需先在 Supabase 執行 supabase/schema.sql。</div>
+          <div class="flabel">Project URL</div>
+          <input class="finput" id="sb-url" placeholder="https://xxxxxx.supabase.co" value="${esc((supabaseCfg()||{}).url||'')}">
+          <div class="flabel">anon public key</div>
+          <input class="finput" id="sb-key" placeholder="eyJhbGciOi…" value="${esc((supabaseCfg()||{}).anonKey||'')}">
+          <div class="flabel">Edge Functions URL（正式架構）</div>
+          <input class="finput" id="sb-fnurl" placeholder="https://xxxx.supabase.co/functions/v1" value="${esc((supabaseCfg()||{}).functionsUrl||'')}">
+          <div class="meta" style="margin-top:2px">正式架構：填入 Functions URL 後，「立即同步」改走 Edge Functions（sessions/report/media-upload）而不再直連 DB。</div>
+          <div class="btnrow">
+            <button class="btn primary" id="b-sb-enable">啟用／儲存</button>
+            <button class="btn ghost" id="b-sb-test">測試連線</button>
+            <button class="btn ghost" id="b-sb-sync">立即同步</button>
+            <button class="btn ghost" id="b-sb-disable">停用</button>
+          </div>
+          <div id="sb-status" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
+        </div>
       </div>
-      <div id="sb-status" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
     </div>`;
     const sbStat=function(msg,ok){const el=$("#sb-status");if(!el)return;el.innerHTML=ok?'<span style="color:var(--green)">✓ '+esc(msg)+'</span>':'<span style="color:var(--red)">✕ '+esc(msg)+'</span>';};
   $("#b-sb-enable").onclick=async()=>{
@@ -1217,7 +1261,6 @@ function ensureDemoSession(finished){
 }
 function bootDemo(){const d=ensureDemoSession(false);if(!d)return;location.hash="#/score/demo";vScore(d.id)}
 function bootResultDemo(){const d=ensureDemoSession(true);if(!d)return;location.hash="#/result/demo";vResult(d.id)}
-function gotoPage(h){location.hash=h}
 document.addEventListener("click",e=>{
   const g=e.target.closest("[data-goto]");
   if(g){e.preventDefault();if(g.dataset.goto==="#/demo"){bootDemo()}else{location.hash=g.dataset.goto;return}}
