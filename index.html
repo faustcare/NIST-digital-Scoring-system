@@ -31,8 +31,9 @@ body{
 }
 .navwrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-width:0}
 #topbar .brand{display:flex;align-items:center;gap:9px;min-width:0;text-decoration:none;color:var(--ink)}
-#topbar .ringlogo{width:28px;height:28px;flex:0 0 28px;border-radius:50%;border:2.5px solid var(--green);position:relative}
-#topbar .ringlogo::before{content:"";position:absolute;inset:5px;border-radius:50%;border:1.5px solid var(--blue)}
+#topbar .tflogo{display:inline-flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:.05em;white-space:nowrap;line-height:1;color:var(--ink);background:linear-gradient(135deg,#fff 20%,var(--green));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#topbar .tflogo img{height:26px;width:auto;display:block;-webkit-text-fill-color:initial}
+#topbar .nistlogo{height:23px;width:auto;flex:0 0 auto;display:block;object-fit:contain}
 #topbar .ttl{font-size:14px;font-weight:700;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 #topbar .sub{font-size:9.5px;color:var(--faint);letter-spacing:.14em;text-transform:uppercase;display:block}
 .sitenav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
@@ -546,7 +547,7 @@ function bottom(html){const b=$("#bottombar");if(html){b.innerHTML='<div class="
 function topbar(html){
   $("#topbar").innerHTML=
     '<div class="navwrap">'+
-    '<a class="brand" href="#/home"><span class="ringlogo"></span><span><span class="ttl">'+(html.ttl||"NIST 數位評分")+'</span><span class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</span></span></a>'+
+    '<a class="brand" href="#/home"><span class="tflogo" title="TFAZ">TFAZ</span><img class="nistlogo" src="assets/nist-logo-white.svg" alt="NIST"><span><span class="ttl">'+(html.ttl||"NIST 數位評分")+'</span><span class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</span></span></a>'+
     '<nav class="sitenav"><a href="#/home">評分</a><a href="#/history">歷史報表</a><a href="#/forms">表單／雲端</a></nav>'+
     '</div>'+
     '<div class="tbright" id="tbright">'+(html.right||'')+'</div>';
