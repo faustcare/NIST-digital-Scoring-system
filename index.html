@@ -651,9 +651,9 @@ function vNew(formId){
     <div class="flabel">考生姓名／編號 <span class="req">*</span></div>
     <input class="finput" id="f-candidate" placeholder="例：王小明 / A-012">
     <div class="frow2">
-      <div><div class="flabel">飛機廠牌</div>
+      <div><div class="flabel">飛機廠牌 <span class="req">*</span></div>
         <select class="fselect" id="f-make"><option value="">-- 選擇廠牌 --</option><option>SKYDIO</option><option>新樂飛</option></select></div>
-      <div><div class="flabel">型號</div><input class="finput" id="f-model" readonly placeholder="選擇廠牌後自動帶出"></div>
+      <div><div class="flabel">型號 <span class="req">*</span></div><input class="finput" id="f-model" readonly placeholder="選擇廠牌後自動帶出"></div>
     </div>
     <div class="flabel">配置（payload／zoom／介面）</div>
     <input class="finput" id="f-payload" placeholder="例：RTK + zoom">
@@ -702,6 +702,8 @@ function vNew(formId){
   $("#b-start").onclick=()=>{
     const g=s=>$("#"+s).value.trim();
     if(!g("f-candidate")){toast("請填考生姓名／編號");$("#f-candidate").focus();return}
+    if(!g("f-make")){toast("請選擇飛機廠牌");$("#f-make").focus();return}
+    if(!g("f-model")){toast("請選擇飛機型號");$("#f-model").focus();return}
     const spacing=($("#f-spacing").value==="other")?g("f-spacing-other"):$("#f-spacing").value;
     const tlimit=($("#f-tlimit").value==="other")?parseFloat(g("f-tlimit-other"))||10:parseInt($("#f-tlimit").value,10);
     const s=newSession(formId,{candidate:g("f-candidate"),aircraft_make:g("f-make"),aircraft_model:g("f-model"),payload:g("f-payload"),
