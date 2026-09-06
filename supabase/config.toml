@@ -18,5 +18,9 @@ enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["http://localhost:3000/*"]
 
+[auth.email]
+# 本機測試：註冊後自動啟用（不需信箱驗證）
+enable_confirmations = false
+
 [functions]
 verify_jwt = true

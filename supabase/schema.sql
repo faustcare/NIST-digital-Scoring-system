@@ -42,6 +42,8 @@ create table if not exists public.profiles (
 create table if not exists public.sessions (
   id              uuid primary key default gen_random_uuid(),
   local_id        text unique,                  -- App 端 localStorage id（同步去重用）
+  form_id         text,                            -- App 表單代號（open-position…）
+  level           text,
   form_uuid       uuid references public.forms(id),
   proctor_id      uuid references public.profiles(id),
   candidate       text,
@@ -118,6 +120,7 @@ create trigger sessions_touch before update on public.sessions
 create index if not exists idx_sessions_proctor on public.sessions(proctor_id);
 create index if not exists idx_sessions_form on public.sessions(form_uuid);
 create index if not exists idx_sessions_status on public.sessions(status);
+create index if not exists idx_sessions_form_id on public.sessions(form_id);
 
 -- ============================================================
 -- Supabase Auth 支援（多人共用）

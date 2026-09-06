@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       // 過濾（報表用）
       const { searchParams: p } = url;
       if (p.get('candidate')) q = q.ilike('candidate', `%${p.get('candidate')}%`);
-      if (p.get('lane')) q = q.eq('form_id', `%${p.get('lane')}%`); // 1:1 需改；範例
+      if (p.get('lane')) q = q.ilike('form_id', `%${p.get('lane')}%`); // 表單代號模糊比對
       if (p.get('level')) q = q.eq('level', p.get('level'));
       if (p.get('from')) q = q.gte('trial_date', p.get('from')!);
       if (p.get('to')) q = q.lte('trial_date', p.get('to')!);

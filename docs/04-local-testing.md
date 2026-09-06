@@ -15,7 +15,9 @@
 bash scripts/setup-local.sh
 ```
 
-自動完成：檢查 Docker → 安裝 supabase CLI → `supabase start`（首次下載映像約數分鐘）→ 套用 `supabase/schema.sql`（含 RLS/Auth trigger/Storage）→ 部署 3 個 Edge Functions 到本地。
+自動完成：檢查 Docker → 安裝 supabase CLI → 將 `supabase/schema.sql` 複製為 `supabase/migrations/0001_init.sql` → `supabase start`（首次下載映像約數分鐘，自動套用 migration：表＋RLS＋Auth trigger＋Storage）→ 部署 3 個 Edge Functions 到本地。
+
+> 若你先前已跑過舊版 stack（schema 變更不會自動生效），先執行 `supabase db reset`（會依 migrations 重建資料庫）。
 
 輸出參數（本機環境）：
 | 項目 | 值 |
@@ -67,6 +69,8 @@ bash scripts/teardown-local.sh     # supabase stop
 
 ## 常見問題
 
-- `supabase db execute` 不存在 → 改 `supabase db reset`（需將 schema.sql 移入 supabase/migrations/）或用 `psql` 手動執行
+- schema 更新後未生效 → 執行 `supabase db reset`（依 supabase/migrations/ 重建資料庫）
+- 登入失敗 400/401 → 確認 config.toml 已設 `[auth.email] enable_confirmations = false`，且 test.env 的 anon key 與 `supabase status` 一致
+- Functions 回 404（欄位 not found）→ 先 `supabase db reset` 套用最新 schema（sessions 需含 form_id / level 欄位）
 - Functions 403 → 確認用 `supabase functions deploy`（本地 CLI 自動注入 JWT config），並已在 `config.toml` 設 `[functions] verify_jwt = true`
 - 信箱驗證卡住 → 本機預設不需驗證；若需請在 Auth settings 關閉 confirm email
