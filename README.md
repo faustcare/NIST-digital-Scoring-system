@@ -20,6 +20,7 @@ NIST sUAS（無人機）現場考評用之數位評分系統。將 NIST 官方�
 docs/01-plan-system-design.md   # 規劃：需求拆解與系統設計
 docs/02-data-model.md           # 規劃：資料模型與 API
 docs/03-roadmap.md              # 里程碑與後續開發
+docs/04-local-testing.md        # 本機測試環境（supabase start＋E2E）
 app/index.html                  # 評分 App（M1 原型，單檔）
 app/forms.open-lane.json        # 表單庫配置（20 張表單）
 ```
