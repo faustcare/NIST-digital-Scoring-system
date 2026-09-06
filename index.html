@@ -1077,11 +1077,17 @@ function vHistory(){
   const levels=[...new Set(all.map(x=>x.form&&x.form.level).filter(Boolean))];
   const laneFilter=lsGet("hist_lane","all");
   const levelFilter=lsGet("hist_level","all");
+  const makeFilter=lsGet("hist_make","all");
+  const modelFilter=lsGet("hist_model","all");
+  const makes=[...new Set(all.map(x=>x.trial&&x.trial.aircraft_make).filter(Boolean))];
+  const models=[...new Set(all.filter(x=>makeFilter==="all"||x.trial.aircraft_make===makeFilter).map(x=>x.trial&&x.trial.aircraft_model).filter(Boolean))];
   const q=(lsGet("hist_q","")).toLowerCase();
   const dateFrom=lsGet("hist_from",""),dateTo=lsGet("hist_to","");
   const filtered=all.filter(x=>{
     if(laneFilter!=="all"&&x.form.lane!==laneFilter)return false;
     if(levelFilter!=="all"&&String(x.form.level)!==String(levelFilter))return false;
+    if(makeFilter!=="all"&&x.trial.aircraft_make!==makeFilter)return false;
+    if(modelFilter!=="all"&&x.trial.aircraft_model!==modelFilter)return false;
     if(q){const hay=(x.trial.candidate||"")+" "+(x.form.title||"")+" "+(x.trial.facility||"");if(!hay.toLowerCase().includes(q))return false}
     if(dateFrom&&x.trial.date&&x.trial.date<dateFrom)return false;
     if(dateTo&&x.trial.date&&x.trial.date>dateTo)return false;
@@ -1125,6 +1131,10 @@ function vHistory(){
         <select class="fselect" id="f-level">${["all",...levels].map(l=>`<option value="${l}" ${String(levelFilter)===String(l)?"selected":""}>${l==="all"?"全部 Level":"Level "+l}</option>`).join("")}</select>
         <button class="fbtn" id="f-reset">重設</button>
       </div>
+      <div class="frow">
+        <select class="fselect" id="f-make">${["all",...makes].map(m=>`<option value="${esc(m)}" ${makeFilter===m?"selected":""}>${m==="all"?"全部廠牌":esc(m)}</option>`).join("")}</select>
+        <select class="fselect" id="f-model">${["all",...models].map(m=>`<option value="${esc(m)}" ${modelFilter===m?"selected":""}>${m==="all"?"全部機型":esc(m)}</option>`).join("")}</select>
+      </div>
     </div>
     <div class="repstat">
       <div class="rs"><b>${done.length}</b><span>已提交</span></div>
@@ -1143,11 +1153,13 @@ function vHistory(){
     el("f-to").addEventListener("change",e=>{lsSet("hist_to",e.target.value);vHistory()});
     el("f-lane").addEventListener("change",e=>{lsSet("hist_lane",e.target.value);vHistory()});
     el("f-level").addEventListener("change",e=>{lsSet("hist_level",e.target.value);vHistory()});
-    el("f-reset").onclick=()=>{["hist_q","hist_from","hist_to","hist_lane","hist_level"].forEach(k=>localStorage.removeItem(k));vHistory()};
+    el("f-make").addEventListener("change",e=>{lsSet("hist_make",e.target.value);lsSet("hist_model","all");vHistory()});
+    el("f-model").addEventListener("change",e=>{lsSet("hist_model",e.target.value);vHistory()});
+    el("f-reset").onclick=()=>{["hist_q","hist_from","hist_to","hist_lane","hist_level","hist_make","hist_model"].forEach(k=>localStorage.removeItem(k));vHistory()};
     el("f-export").onclick=()=>exportReport(filtered);
     document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>location.hash=el.dataset.goto));
     document.querySelectorAll(".hdel").forEach(el=>el.addEventListener("click",()=>{if(confirm("確定刪除這場次紀錄？")){delSession(el.dataset.del);toast("已刪除");vHistory()}}));
-    document.querySelectorAll(".wbtn").forEach(el=>el.addEventListener("click",()=>{lsSet("hist_q","");lsSet("hist_lane","all");lsSet("hist_level","all");lsSet("hist_from","");lsSet("hist_to","");vHistory()}));
+    document.querySelectorAll(".wbtn").forEach(el=>el.addEventListener("click",()=>{lsSet("hist_q","");lsSet("hist_lane","all");lsSet("hist_level","all");lsSet("hist_make","all");lsSet("hist_model","all");lsSet("hist_from","");lsSet("hist_to","");vHistory()}));
   };
   bind();
 }
