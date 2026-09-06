@@ -31,9 +31,7 @@ body{
 }
 .navwrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-width:0}
 #topbar .brand{display:flex;align-items:center;gap:9px;min-width:0;text-decoration:none;color:var(--ink)}
-#topbar .tflogo{display:inline-flex;align-items:center;font-size:17px;font-weight:800;letter-spacing:.05em;white-space:nowrap;line-height:1;color:var(--ink);background:linear-gradient(135deg,#fff 20%,var(--green));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-#topbar .tflogo img{height:26px;width:auto;display:block;-webkit-text-fill-color:initial}
-#topbar .nistlogo{height:23px;width:auto;flex:0 0 auto;display:block;object-fit:contain}
+#topbar .tfazlogo{height:34px;width:auto;display:block;object-fit:contain;flex:0 0 auto}
 #topbar .ttl{font-size:14px;font-weight:700;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 #topbar .sub{font-size:9.5px;color:var(--faint);letter-spacing:.14em;text-transform:uppercase;display:block}
 .sitenav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
@@ -68,10 +66,7 @@ h1.viewttl{font-size:26px;font-weight:800;letter-spacing:.01em;line-height:1.25}
 .hero{display:flex;align-items:center;gap:22px;margin-bottom:6px;flex-wrap:wrap}
 .hero .hero-copy{flex:1;min-width:240px}
 .hero .bucketstamp{display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;margin:0}
-.stampwrap{position:relative;width:112px;height:112px}
-.stampring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--green)}
-.stampring::before{content:"";position:absolute;inset:14px;border-radius:50%;border:2px dashed var(--blue);opacity:.9}
-.stampcore{position:absolute;inset:30px;border-radius:50%;border:2.5px solid var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;color:var(--amber)}
+.stampimg{width:118px;height:118px;object-fit:contain;display:block}
 .stamplbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.3em;color:var(--faint)}
 .hero-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
 @media(max-width:520px){.hero .bucketstamp{display:none}}
@@ -547,7 +542,7 @@ function bottom(html){const b=$("#bottombar");if(html){b.innerHTML='<div class="
 function topbar(html){
   $("#topbar").innerHTML=
     '<div class="navwrap">'+
-    '<a class="brand" href="#/home"><span class="tflogo" title="TFAZ">TFAZ</span><img class="nistlogo" src="assets/nist-logo-white.svg" alt="NIST"><span><span class="ttl">'+(html.ttl||"NIST 數位評分")+'</span><span class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</span></span></a>'+
+    '<a class="brand" href="#/home"><img class="tfazlogo" src="assets/tfaz-logo.png" alt="TFAZ 台灣消防訓練中心"><span><span class="ttl">'+(html.ttl||"NIST 數位評分")+'</span><span class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</span></span></a>'+
     '<nav class="sitenav"><a href="#/home">評分</a><a href="#/history">歷史報表</a><a href="#/forms">表單／雲端</a></nav>'+
     '</div>'+
     '<div class="tbright" id="tbright">'+(html.right||'')+'</div>';
@@ -630,7 +625,7 @@ function vHome(){
         </div>
       </div>
       <div class="bucketstamp">
-        <div class="stampwrap"><div class="stampring"></div><div class="stampcore">20</div></div>
+        <img class="stampimg" src="assets/nist-logo.png" alt="NIST Standard Test Methods">
         <div class="stamplbl">A B C D · 1 2 3 4 5</div>
       </div>
     </section>
