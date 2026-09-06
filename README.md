@@ -9,7 +9,7 @@ NIST sUAS（無人機）現場考評用之數位評分系統。將 NIST 官方�
 
 ## 目前狀態（M1–M3 功能完成）
 
-- App 原型（單檔、離線可用）：`app/index.html` — 直接雙擊即可在瀏覽器使用
+- 評分網站（單檔、RWD 響應式、離線可用）：`app/index.html` — 直接雙擊即可在瀏覽器使用
 - 表單庫配置：`app/forms.open-lane.json`
 - 內建 **20 張表單**：Open（Position/Traverse/Orbit/Spiral/Recon）・ Obstructed（Wall90/Wall45/Ground/Post/Avoid）・ Confined（同組）・ Scenario（Fuel Truck/Box Truck/Wide Area Search/Obstructed 1–10）・ Sensor（SENSING 1–5）
 - 功能：表單引擎（JSON 驅動）、測驗條件（Trial Info）、計時器（暫停/逾時）、自動計分（對齊 5/部分 1/漏失 0＋缺口 5）、暫存、結果頁（通過判定/簽名欄）、匯出 CSV＋列印/PDF、表單管理（JSON 匯入/匯出/回復預設）
@@ -22,7 +22,7 @@ docs/02-data-model.md           # 規劃：資料模型與 API
 docs/03-roadmap.md              # 里程碑與後續開發
 docs/04-local-testing.md        # 本機測試環境（supabase start＋E2E）
 docs/05-deployment.md           # 部署文件（本機測試→Supabase Cloud 上線）
-app/index.html                  # 評分 App（M1 原型，單檔）
+app/index.html                  # 評分網站（單檔、RWD：行動／平板／桌機自適應）
 supabase/migrations/            # 資料庫 migration（0001_init.sql，本機/雲端共用）
 app/forms.open-lane.json        # 表單庫配置（20 張表單）
 ```
