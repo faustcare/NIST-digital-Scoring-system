@@ -771,11 +771,11 @@ function vScore(id){
   }
   gridAlign.innerHTML=ah;gridGap.innerHTML=gh;
   document.querySelectorAll('#g-align .cell').forEach(el=>{
-    el.addEventListener("click",()=>{cycleCode(id,el.dataset.code,["pass","partial","miss"])});
+    el.addEventListener("click",()=>{if(el.dataset.lpSuppress){delete el.dataset.lpSuppress;return}cycleCode(id,el.dataset.code,["pass","partial","miss"])});
     bindCellUX(id,el);
   });
   document.querySelectorAll('#g-gap .cell').forEach(el=>{
-    el.addEventListener("click",()=>{cycleCode(id,el.dataset.code,["ok","no"])});
+    el.addEventListener("click",()=>{if(el.dataset.lpSuppress){delete el.dataset.lpSuppress;return}cycleCode(id,el.dataset.code,["ok","no"])});
     bindCellUX(id,el);
   });
   $("#bb-save").onclick=()=>{s=getSession(id);s.savedAt=Date.now();saveSession(s);toast("已暫存 "+new Date().toLocaleTimeString("zh-TW",{hour12:false}))};
@@ -824,6 +824,10 @@ function bindCellUX(id,el){
   let lpTimer=null,lpFired=false,startX=0,startY=0,dx=0,dy=0;
   const clear=()=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null}el.classList.remove("lp")};
   const fire=()=>{lpFired=true;buzz(35);el.classList.add("lp");clear()};
+  const undo=()=>{
+    const code=el.dataset.code,kind=el.dataset.kind;
+    const s=getSession(id);if(s&&s.scores&&s.scores[code]){delete s.scores[code];s.savedAt=Date.now();saveSession(s);updateCell(id,el,code,kind==="gap"?["ok","no"]:["pass","partial","miss"]);renderTotal(s);toast("已復原 "+code)}
+  };
   el.addEventListener("touchstart",e=>{
     const t=e.touches[0];startX=t.clientX;startY=t.clientY;dx=0;dy=0;lpFired=false;
     lpTimer=setTimeout(fire,430);
@@ -834,14 +838,21 @@ function bindCellUX(id,el){
   },{passive:true});
   el.addEventListener("touchend",e=>{
     clear();
-    if(lpFired){e.preventDefault();e.stopPropagation();const code=el.dataset.code;const kind=el.dataset.kind;
-      const s=getSession(id);if(s&&s.scores&&s.scores[code]){delete s.scores[code];s.savedAt=Date.now();saveSession(s);updateCell(id,el,code,kind==="gap"?["ok","no"]:["pass","partial","miss"]);renderTotal(s);toast("已復原 "+code)}
-      return}
+    if(lpFired){e.preventDefault();e.stopPropagation();el.dataset.lpSuppress="1";undo();return}
     if(dx<10&&dy<10){buzz(12);el.click()}
   },{passive:false});
-  el.addEventListener("mousedown",()=>{lpTimer=setTimeout(fire,430)});
-  el.addEventListener("mousemove",()=>{if(dx>10||dy>10)clear()});
-  el.addEventListener("mouseup",()=>{clear();if(lpFired){const code=el.dataset.code;const kind=el.dataset.kind;const s=getSession(id);if(s&&s.scores&&s.scores[code]){delete s.scores[code];s.savedAt=Date.now();saveSession(s);updateCell(id,el,code,kind==="gap"?["ok","no"]:["pass","partial","miss"]);renderTotal(s);toast("已復原 "+code)}}});
+  el.addEventListener("mousedown",e=>{
+    lpFired=false;dx=0;dy=0;startX=e.clientX;startY=e.clientY;
+    lpTimer=setTimeout(fire,430);
+  });
+  el.addEventListener("mousemove",e=>{
+    dx=Math.abs(e.clientX-startX);dy=Math.abs(e.clientY-startY);
+    if(dx>10||dy>10)clear();
+  });
+  el.addEventListener("mouseup",e=>{
+    clear();
+    if(lpFired){e.preventDefault();e.stopPropagation();el.dataset.lpSuppress="1";undo()}
+  });
   el.addEventListener("mouseleave",clear);
 }
 function renderTimer(s){
@@ -1022,8 +1033,10 @@ function vResult(id){
 }
 function printSheetHTML(id){
   const s=getSession(id);if(!s)return"";
-  const sc=scoreOf(s),items=bucketItems();
-  const rowSet=[...new Set(items.map(i=>i.row))];
+  const sc=scoreOf(s),items=(s._items&&s._items.length)?s._items:bucketItems();
+  const scen=isScenForm(s.formId);
+  const rowKey=it=>it.row!==undefined?it.row:(it.code||"·").charAt(0);
+  const rowSet=[...new Set(items.map(rowKey))];
   const t=s.trial;
   const sigInstr=mediaList(id).find(m=>m.type==="signature");
   const sigStudent=mediaList(id).find(m=>m.type==="signature_student");
@@ -1035,10 +1048,12 @@ function printSheetHTML(id){
   kv("時限",t.time_limit_min+" min");kv("用時",fmtElapsed(elapsedMs(s)));kv("評分",t.scoring_source);
   const cpr=(code,kind)=>{const v=s.scores&&s.scores[code];let mk="pt";
     if(kind==="a"){if(v==="pass")mk="ps";else if(v==="partial")mk="pa";else if(v==="miss")mk="pm"}else{if(v==="ok")mk="ps";else if(v==="no")mk="pm"}
+    const sym=scen?esc(code||"·"):"·";
     return `<span style="display:inline-flex;width:30px;height:30px;border:1.4px solid #222;border-radius:50%;margin:3px;align-items:center;justify-content:center;position:relative">
+      <span style="font-size:8px;position:absolute;top:1px">${sym}</span>
       <span style="position:absolute;inset:6px;border-radius:50%;${mk==="ps"?"background:#222":mk==="pa"?"background:linear-gradient(to top,#222 50%,transparent 50%)":mk==="pm"?"background:repeating-linear-gradient(45deg,transparent 0 3px,#222 3px 5px)":""}"></span></span>`};
   let ag="",gg="";
-  rowSet.forEach(r=>{const ri=items.filter(i=>i.row===r);ag+=ri.map(it=>cpr(it.code,"a")).join("");gg+=ri.map(it=>cpr("G"+it.code,"g")).join("")});
+  rowSet.forEach(r=>{const ri=items.filter(it=>rowKey(it)===r);ag+=ri.map(it=>cpr(it.code,"a")).join("");gg+=ri.filter(it=>gapFor(it.code,s.formId)).map(it=>cpr(gapFor(it.code,s.formId),"g")).join("")});
   return `<div class="sheet" style="background:#fff;color:#111;padding:24px">
     <div style="font-size:18px;font-weight:800">NIST 數位評分表</div>
     <div style="font-size:10px;letter-spacing:.2em;color:#666;margin:2px 0 10px;text-transform:uppercase">${esc(LANES[s.form.lane])} · LEVEL ${esc(s.form.level)} · ${esc(s.form.name)} · 2020B5</div>
@@ -1060,7 +1075,8 @@ function printSheet(id){
 }
 function exportCSV(id){
   const s=getSession(id);if(!s)return;
-  const sc=scoreOf(s),items=bucketItems(),t=s.trial;
+  const sc=scoreOf(s),items=(s._items&&s._items.length)?s._items:bucketItems(),t=s.trial;
+  const scen=isScenForm(s.formId);
   const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
   const rows=[];
   rows.push(["NIST 數位評分表 — 匯出"].join(","));
@@ -1074,9 +1090,10 @@ function exportCSV(id){
   rows.push(["項目","類型","結果","得分"]);
   for(const it of items){
     const v=s.scores&&s.scores[it.code];const map={pass:"對齊",partial:"部分",miss:"漏失"};const gs=map[v]||"未評";
-    rows.push([it.code,"對齊",gs,v==="pass"?5:v==="partial"?1:0].join(","));
-    const g=s.scores&&s.scores["G"+it.code];const gs2=g==="ok"?"正確":g==="no"?"錯誤":"未評";
-    rows.push(["G"+it.code,"缺口",gs2,g==="ok"?5:0].join(","));
+    rows.push([it.code,scen?"目標辨識":"對齊",gs,v==="pass"?5:v==="partial"?1:0].join(","));
+    const g=gapFor(it.code,s.formId);
+    if(g){const gs2=s.scores&&s.scores[g]==="ok"?"正確":s.scores&&s.scores[g]==="no"?"錯誤":"未評";
+      rows.push([g,"缺口",gs2,s.scores&&s.scores[g]==="ok"?5:0].join(","));}
   }
   rows.push([]);
   rows.push(["對齊小計",sc.align+"/"+sc.alignMax,"缺口小計",sc.gap+"/"+sc.gapMax,"總分",sc.total+"/"+sc.totalMax]);
@@ -1278,7 +1295,7 @@ function ensureDemoSession(finished){
   let demo=listSessions().find(x=>x.id==="demo");
   const f=getForm("open-position");if(!f)return null;
   if(!demo){
-    demo=newSession("open-position",{candidate:"示範考生 D-001",aircraft_make:"DJI",aircraft_model:"Mavic 3E",payload:"RTK + 1x zoom",
+    demo=newSession("open-position",{candidate:"示範考生 D-001",aircraft_make:"SKYDIO",aircraft_model:"X10",payload:"RTK + 1x zoom",
       personnel:"考官範例",facility:"示範測試場",date:nowISO(),time:nowTime(),lane_no:"Lane 1",lane_spacing:"10",wind_avg:"8",wind_gust:"14",
       lighting:"DAYLIGHT",pilot_view:"EYES ON",time_limit_min:10,scoring_source:"Pilot",_autoStart:true},"demo");
   }
