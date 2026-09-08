@@ -128,6 +128,10 @@ h1.viewttl{font-size:26px;font-weight:800;letter-spacing:.01em;line-height:1.25}
 }
 .finput:focus,.fselect:focus,.ftextarea:focus{outline:none;border-color:var(--blue)}
 .fselect{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 17px) 55%,calc(100% - 12px) 55%;background-size:5px 5px;background-repeat:no-repeat}
+/* ============ 管理後台 ============ */
+.adminrows{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.arow{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.arow .aname{flex:1;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .finput{font-family:var(--mono);font-size:14px;letter-spacing:.02em}
 .finput[type=date],.finput[type=time]{color-scheme:dark}
@@ -373,6 +377,10 @@ function listSessions(){return lsGet(LS_SESS,[]).sort((a,b)=>(b.createdAt||0)-(a
 function getSession(id){return lsGet(LS_SESS,[]).find(s=>s.id===id)||null}
 function saveSession(s){const arr=lsGet(LS_SESS,[]);const i=arr.findIndex(x=>x.id===s.id);if(i>=0)arr[i]=s;else arr.unshift(s);lsSet(LS_SESS,arr)}
 function delSession(id){lsSet(LS_SESS,lsGet(LS_SESS,[]).filter(s=>s.id!==id))}
+/* ---------- admin master data（管理後台） ---------- */
+const LS_ADMIN="nist_admin_master_v1";
+function adminMaster(){const m=lsGet(LS_ADMIN,null);if(m&&Array.isArray(m.instructors)&&Array.isArray(m.facilities)&&Array.isArray(m.students))return m;return {instructors:[],facilities:[],students:[]}}
+function saveAdminMaster(m){lsSet(LS_ADMIN,m)}
 /* ---------- supabase cloud sync (optional) ---------- */
 function supabaseCfg(){return lsGet("nist_supabase_cfg",null)}
 function saveSupabaseCfg(c){lsSet("nist_supabase_cfg",c)}
@@ -534,6 +542,7 @@ function route(){
   else if(h==="#/auth")vAuth();
   else if(h==="#/history")vHistory();
   else if(h==="#/forms")vForms();
+  else if(h==="#/admin")vAdmin();
   else vHome();
   window.scrollTo(0,0);
 }
@@ -543,7 +552,7 @@ function topbar(html){
   $("#topbar").innerHTML=
     '<div class="navwrap">'+
     '<a class="brand" href="#/home"><img class="tfazlogo" src="assets/tfaz-logo.png" alt="TFAZ 台灣消防訓練中心"><span><span class="ttl">'+(html.ttl||"NIST 數位評分")+'</span><span class="sub">'+(html.sub||"DIGITAL SCORESHEET · 2020B5")+'</span></span></a>'+
-    '<nav class="sitenav"><a href="#/home">評分</a><a href="#/history">歷史報表</a><a href="#/forms">表單／雲端</a></nav>'+
+    '<nav class="sitenav"><a href="#/home">評分</a><a href="#/history">歷史報表</a><a href="#/forms">表單／雲端</a><a href="#/admin">管理後台</a></nav>'+
     '</div>'+
     '<div class="tbright" id="tbright">'+(html.right||'')+'</div>';
   if(!html.right){insertAuthChip()}
@@ -641,6 +650,7 @@ function vHome(){
 function vNew(formId){
   const f=getForm(formId);if(!f){location.hash="#/home";return}
   topbar({ttl:esc(f.title),sub:"建立場次 · TRIAL INFO"});
+  const adminOpts=k=>{const items=(adminMaster()[k]||[]).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");return `<option value="">-- ${items?"請選擇":"尚無資料，可手動輸入"} --</option>`+items+`<option value="__custom__">＋ 手動輸入…</option>`};
   $("#view").innerHTML=`
     <div class="eyebrow">${esc(LANES[f.lane])} · LEVEL ${esc(f.level)}</div>
     <h1 class="viewttl">測驗條件</h1>
@@ -649,7 +659,8 @@ function vNew(formId){
       <div class="meta">${esc(f.desc||"")} · 預設時限 ${f.time_limit_minutes} 分鐘</div></div>
     <div class="card" style="margin-top:12px;max-width:720px">
     <div class="flabel">考生姓名／編號 <span class="req">*</span></div>
-    <input class="finput" id="f-candidate" placeholder="例：王小明 / A-012">
+    <select class="fselect" id="f-candidate">${adminOpts("students")}</select>
+    <div id="f-candidate-other-wrap" class="hidden" style="margin-top:6px"><input class="finput" id="f-candidate-other" placeholder="例：王小明 / A-012"></div>
     <div class="frow2">
       <div><div class="flabel">飛機廠牌 <span class="req">*</span></div>
         <select class="fselect" id="f-make"><option value="">-- 選擇廠牌 --</option><option>SKYDIO</option><option>新樂飛</option></select></div>
@@ -658,8 +669,12 @@ function vNew(formId){
     <div class="flabel">配置（payload／zoom／介面）</div>
     <input class="finput" id="f-payload" placeholder="例：RTK + zoom">
     <div class="frow2">
-      <div><div class="flabel">人員／考官</div><input class="finput" id="f-personnel" placeholder="考官姓名"></div>
-      <div><div class="flabel">設施／地點</div><input class="finput" id="f-facility" placeholder="測試場名"></div>
+      <div><div class="flabel">人員／考官</div>
+        <select class="fselect" id="f-personnel">${adminOpts("instructors")}</select>
+        <div id="f-personnel-other-wrap" class="hidden" style="margin-top:6px"><input class="finput" id="f-personnel-other" placeholder="例：李教官"></div></div>
+      <div><div class="flabel">設施／地點</div>
+        <select class="fselect" id="f-facility">${adminOpts("facilities")}</select>
+        <div id="f-facility-other-wrap" class="hidden" style="margin-top:6px"><input class="finput" id="f-facility-other" placeholder="例：竹山訓練場"></div></div>
     </div>
     <div class="frow2">
       <div><div class="flabel">日期</div><input class="finput" type="date" id="f-date" value="${nowISO()}"></div>
@@ -696,18 +711,21 @@ function vNew(formId){
     </div>`;
   const AIRCRAFT_MODELS={SKYDIO:"X10","新樂飛":"T100"};
   $("#f-make").addEventListener("change",e=>{$("#f-model").value=AIRCRAFT_MODELS[e.target.value]||""});
+  ["f-candidate","f-personnel","f-facility"].forEach(id=>{$("#"+id).addEventListener("change",e=>{const w=$("#"+id+"-other-wrap");if(w)w.classList.toggle("hidden",e.target.value!=="__custom__")})});
   $("#f-spacing").addEventListener("change",e=>{$("#customSpacing").classList.toggle("hidden",e.target.value!=="other")});
   $("#f-tlimit").addEventListener("change",e=>{$("#customLimit").classList.toggle("hidden",e.target.value!=="other")});
   $("#b-cancel").onclick=()=>location.hash="#/home";
   $("#b-start").onclick=()=>{
     const g=s=>$("#"+s).value.trim();
-    if(!g("f-candidate")){toast("請填考生姓名／編號");$("#f-candidate").focus();return}
+    const pick=(sel,other)=>{const v=$("#"+sel).value;return v==="__custom__"?$("#"+other).value.trim():v};
+    const candidate=pick("f-candidate","f-candidate-other");
+    if(!candidate){toast("請填考生姓名／編號");$("#f-candidate").focus();return}
     if(!g("f-make")){toast("請選擇飛機廠牌");$("#f-make").focus();return}
     if(!g("f-model")){toast("請選擇飛機型號");$("#f-model").focus();return}
     const spacing=($("#f-spacing").value==="other")?g("f-spacing-other"):$("#f-spacing").value;
     const tlimit=($("#f-tlimit").value==="other")?parseFloat(g("f-tlimit-other"))||10:parseInt($("#f-tlimit").value,10);
-    const s=newSession(formId,{candidate:g("f-candidate"),aircraft_make:g("f-make"),aircraft_model:g("f-model"),payload:g("f-payload"),
-      personnel:g("f-personnel"),facility:g("f-facility"),date:g("f-date")||nowISO(),time:g("f-time")||nowTime(),lane_no:g("f-lane"),
+    const s=newSession(formId,{candidate:candidate,aircraft_make:g("f-make"),aircraft_model:g("f-model"),payload:g("f-payload"),
+      personnel:pick("f-personnel","f-personnel-other"),facility:pick("f-facility","f-facility-other"),date:g("f-date")||nowISO(),time:g("f-time")||nowTime(),lane_no:g("f-lane"),
       lane_spacing:spacing,wind_avg:g("f-wavg"),wind_gust:g("f-wgust"),lighting:$("#f-lighting").value,pilot_view:$("#f-pview").value,
       time_limit_min:tlimit,scoring_source:$("#f-src").value,_autoStart:true});
     location.hash="#/score/"+s.id;
@@ -1206,6 +1224,47 @@ function exportReport(rows){
   const blob=new Blob(["\ufeff"+out.join("\n")],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nist-report-"+nowISO()+".csv";a.click();URL.revokeObjectURL(a.href);
   toast("報表已匯出");
+}
+/* ═══════════ VIEW: ADMIN（管理後台） ═══════════ */
+function vAdmin(){
+  const M=adminMaster();
+  topbar({ttl:"管理後台",sub:"MASTER DATA · 下拉選單來源"});
+  const card=(title,desc,key,ph)=>{
+    const items=M[key]||[];
+    return `<div class="card">
+      <h3>${title} <span class="chip">${items.length}</span></h3>
+      <div class="meta">${desc}</div>
+      <div class="adminrows">
+        ${items.length?items.map((v,i)=>`<div class="arow"><span class="aname">${esc(v)}</span>
+          <button class="btn small ghost" data-k="${key}" data-i="${i}" data-act="edit">改名</button>
+          <button class="btn small ghost" data-k="${key}" data-i="${i}" data-act="del">✕</button></div>`).join(""):'<div class="meta">尚無資料 — 於下方新增。</div>'}
+      </div>
+      <div class="btnrow" style="margin-top:10px">
+        <input class="finput" id="admin-in-${key}" placeholder="${ph}" style="flex:1">
+        <button class="btn primary" data-k="${key}" data-act="add">新增</button>
+      </div>
+    </div>`;
+  };
+  $("#view").innerHTML=`
+    <div class="eyebrow">ADMIN · MASTER DATA</div>
+    <h1 class="viewttl">管理後台</h1>
+    <p class="lede">在這裡維護下拉式選單的資料來源。新增／改名後，「測驗條件」頁的學員、教官、場地欄位自動變成下拉式選單。資料存於本機瀏覽器（localStorage），離線可用。</p>
+    <div class="mgmtgrid">
+      ${card("學員名單","供「考生姓名／編號」下拉選擇（建立場次必填）。","students","例：王小明 / A-012")}
+      ${card("監考教官","供「人員／考官」下拉選擇。","instructors","例：李教官")}
+      ${card("考試場地","供「設施／地點」下拉選擇。","facilities","例：竹山訓練場")}
+    </div>
+    <div class="btnrow" style="margin-top:14px"><button class="btn ghost block" id="b-admin-reset">清空管理後台全部資料</button></div>`;
+  document.querySelectorAll("[data-act]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const k=b.dataset.k,i=parseInt(b.dataset.i||"0",10),act=b.dataset.act,m=adminMaster();
+      if(act==="add"){const inp=document.getElementById("admin-in-"+k);const v=(inp.value||"").trim();
+        if(!v){toast("請輸入內容");return}m[k]=m[k]||[];if(m[k].includes(v)){toast("已存在");return}m[k].push(v);m[k].sort((a,b)=>a.localeCompare(b,"zh-Hant"));saveAdminMaster(m);toast("已新增");vAdmin()}
+      else if(act==="edit"){const cur=m[k][i];const nv=prompt("改為：",cur);if(nv&&nv.trim()&&nv.trim()!==cur){m[k][i]=nv.trim();saveAdminMaster(m);toast("已改名");vAdmin()}}
+      else if(act==="del"){if(confirm("刪除「"+m[k][i]+"」？")){m[k].splice(i,1);saveAdminMaster(m);toast("已刪除");vAdmin()}}
+    });
+  });
+  $("#b-admin-reset").onclick=()=>{if(confirm("清空管理後台全部資料？測驗條件欄位將回到手動輸入。")){localStorage.removeItem(LS_ADMIN);toast("已清空");vAdmin()}};
 }
 /* ═══════════ VIEW: FORMS MGMT ═══════════ */
 function vForms(){
